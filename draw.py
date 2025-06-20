@@ -17,6 +17,7 @@ import numpy as np
 import os
 import time
 import pandas as pd
+import argparse
 
 plt.rcParams.update(
     {
@@ -42,6 +43,7 @@ plt.rcParams.update(
     }
 )
 
+
 # %%
 # --------------------------------------------------------------------------------
 # Filename Management
@@ -62,7 +64,7 @@ def get_figure_path(pic_name):
 def plot_beta(
     data,
     bar_width=2,
-    pic_name=1,
+    pic_name="plot_beta",
     save=False,
     xlabel="TX rate / (TXs/Sec)",
     ylabel="Throughput (tps)",
@@ -98,9 +100,12 @@ def plot_beta(
     leftaxis.set_ylim(0, ylim)
     leftaxis.set_xticks(x, x.astype(int))
     # print(x)
-    leftaxis.legend(loc=0)
+    leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.25), ncol=3)
     if ytick_k:
-        plt.yticks(np.linspace(0, xlim, xscale + 1), np.linspace(0, 10, xscale + 1))
+        plt.yticks(
+            np.linspace(0, xlim, xscale + 1),
+            [f"{int(y)}" for y in np.linspace(0, 10, xscale + 1)],
+        )
         plt.xticks(np.linspace(8, 64, 8))
         leftaxis.set_xlim(4, 68)
     if save:
@@ -146,7 +151,7 @@ def plot_line_with_markers(
     if ytick_step:
         leftaxis.set_yticks(np.arange(0, ylim + 1, ytick_step))
 
-    leftaxis.legend(loc=0)
+    leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.25), ncol=3)
 
     if save:
         plt.savefig(get_figure_path(pic_name), dpi=600, bbox_inches="tight")
@@ -189,9 +194,14 @@ def plot_time_series(
     leftaxis.set_yticks(np.arange(0, ylim + 1, ystep))
     if legend:
         if legend_fontsize:
-            leftaxis.legend(fontsize=legend_fontsize)
+            leftaxis.legend(
+                loc="upper center",
+                bbox_to_anchor=(0.5, 1.25),
+                ncol=4,
+                fontsize=legend_fontsize,
+            )
         else:
-            leftaxis.legend()
+            leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.25), ncol=4)
 
     if save:
         plt.savefig(get_figure_path(pic_name), dpi=600, bbox_inches="tight")
@@ -298,7 +308,6 @@ class ThroughputVsBlkSizePlotter(BasePlotter):
             ylim=4000,
             labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
             ytick_step=500,
-            markersize=None,
         )
 
 
@@ -477,36 +486,73 @@ class PlotFactory:
 def main():
     """Main function to run all plotting tasks."""
     plot_factory = PlotFactory()
+    all_tasks = list(plot_factory._plotters.keys())
+    available_tasks = all_tasks + ["update_data", "all"]
 
-    plot_configs = {
-        "cross_shard_txs": True,
-        "throughput_vs_shards": True,
-        "latency_vs_shards": True,
-        "throughput_vs_blk_size": True,
-        "latency_vs_blk_size": True,
-        "throughput_vs_tx_arrival": True,
-        "latency_vs_tx_arrival": True,
-    }
+    parser = argparse.ArgumentParser(description="Generate plots from experiment data.")
+    parser.add_argument(
+        "task",
+        nargs="?",
+        default="all",
+        help=f"The task to run. Choose from: {', '.join(available_tasks)}. "
+        'If no task is specified, "all" will be executed.',
+    )
+    args = parser.parse_args()
+    task_to_run = args.task
 
-    for name, save_flag in plot_configs.items():
-        plotter = plot_factory.create_plotter(name, save=save_flag)
+    if task_to_run == "all":
+        # The original "run all" logic
+        plot_configs = {
+            "cross_shard_txs": False,
+            "throughput_vs_shards": True,
+            "latency_vs_shards": True,
+            "throughput_vs_blk_size": True,
+            "latency_vs_blk_size": True,
+            "throughput_vs_tx_arrival": True,
+            "latency_vs_tx_arrival": True,
+        }
+        for name, save_flag in plot_configs.items():
+            print(f"Running task: {name}...")
+            plotter = plot_factory.create_plotter(name, save=save_flag)
+            plotter.plot()
+            print(f"Finished task: {name}")
+
+        print("Updating data from git repo...")
+        repo_path = os.path.expanduser("~/codes/txrate_xshard")
+        if os.path.isdir(repo_path):
+            os.system(f"cd {repo_path} && git pull")
+            print("Data updated.")
+        else:
+            print(f"Warning: Directory not found at {repo_path}. Skipping data update.")
+
+        queue_plot_configs = {
+            "queue_size_total": True,
+            "queue_size_q1": True,
+            "queue_size_q2": True,
+        }
+        for name, save_flag in queue_plot_configs.items():
+            print(f"Running task: {name}...")
+            plotter = plot_factory.create_plotter(name, save=save_flag)
+            plotter.plot()
+            print(f"Finished task: {name}")
+
+    elif task_to_run in all_tasks:
+        print(f"Running task: {task_to_run}...")
+        plotter = plot_factory.create_plotter(task_to_run, save=True)
         plotter.plot()
+        print(f"Finished task: {task_to_run}")
 
-    # Update data from git repo
-    # Assuming txrate_xshard is in a specific path relative to home
-    print("Updating data from git repo...")
-    os.system("cd ~/codes/txrate_xshard && git pull")
-    print("Data updated.")
+    elif task_to_run == "update_data":
+        print("Updating data from git repo...")
+        repo_path = os.path.expanduser("~/codes/txrate_xshard")
+        if os.path.isdir(repo_path):
+            os.system(f"cd {repo_path} && git pull")
+            print("Data updated.")
+        else:
+            print(f"Warning: Directory not found at {repo_path}. Skipping data update.")
 
-    queue_plot_configs = {
-        "queue_size_total": True,
-        "queue_size_q1": True,
-        "queue_size_q2": True,
-    }
-
-    for name, save_flag in queue_plot_configs.items():
-        plotter = plot_factory.create_plotter(name, save=save_flag)
-        plotter.plot()
+    else:
+        print(f"Unknown task: {task_to_run}. Please choose from {available_tasks}")
 
 
 if __name__ == "__main__":
