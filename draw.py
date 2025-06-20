@@ -24,7 +24,7 @@ plt.rcParams.update(
         "text.usetex": False,
         "font.family": "Times",
         "font.size": 24,
-        "legend.fontsize": 16,
+        "legend.fontsize": 24,
     }
 )
 
@@ -108,7 +108,7 @@ def plot_beta(
     leftaxis.set_xticks(x, x.astype(int))
     # print(x)
     if show_legend:
-        leftaxis.legend(loc="upper center", bbox_to_anchor=(0.1, 0), ncol=3)
+        leftaxis.legend(loc="upper center", bbox_to_anchor=(0.1, 0), ncol=7)
     if ytick_k:
         plt.yticks(
             np.linspace(0, xlim, xscale + 1),
@@ -189,7 +189,7 @@ def plot_line_with_markers(
         leftaxis.set_yticks(np.arange(0, ylim + 1, ytick_step))
 
     if show_legend:
-        leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.25), ncol=3)
+        leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.3), ncol=7)
 
     if ax is None and save:
         plt.savefig(get_figure_path(pic_name), dpi=600, bbox_inches="tight")
@@ -211,6 +211,7 @@ def plot_time_series(
     linewidth=2,
     legend_fontsize=None,
     ax=None,
+    legend_ncol=4,
 ):
     x = data[0, :]
     ynum = np.size(data, 0) - 1
@@ -237,15 +238,7 @@ def plot_time_series(
     leftaxis.set_xticks(np.arange(0, xlim + 1, xstep))
     leftaxis.set_yticks(np.arange(0, ylim + 1, ystep))
     if show_legend:
-        if legend_fontsize:
-            leftaxis.legend(
-                loc="upper center",
-                bbox_to_anchor=(0.5, 1.25),
-                ncol=4,
-                fontsize=legend_fontsize,
-            )
-        else:
-            leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.25), ncol=4)
+        leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.25), ncol=legend_ncol)
 
     if ax is None and save:
         plt.savefig(get_figure_path(pic_name), dpi=600, bbox_inches="tight")
@@ -462,6 +455,7 @@ class QueueSizeTotalPlotter(BasePlotter):
             ystep=5000,
             ax=ax,
             show_legend=show_legend,
+            legend_ncol=7,
         )
 
 
@@ -490,7 +484,7 @@ class QueueSizeQ1Plotter(BasePlotter):
             ],
             ystep=15000,
             xstep=500,
-            legend_fontsize=14,
+            # legend_fontsize=14,
             ax=ax,
             show_legend=show_legend,
         )
