@@ -3,7 +3,7 @@
 # Created Date: Friday, June 20th 2025
 # Author: Zihan
 # -----
-# Last Modified: Friday, 20th June 2025 5:40:28 pm
+# Last Modified: Friday, 20th June 2025 5:47:58 pm
 # Modified By: the developer formerly known as Zihan at <wzh4464@gmail.com>
 # -----
 # HISTORY:
@@ -166,6 +166,7 @@ def plot_time_series(
     ystep,
     legend=True,
     linewidth=2,
+    legend_fontsize=None,
 ):
     x = data[0, :]
     ynum = np.size(data, 0) - 1
@@ -187,7 +188,10 @@ def plot_time_series(
     leftaxis.set_xticks(np.arange(0, xlim + 1, xstep))
     leftaxis.set_yticks(np.arange(0, ylim + 1, ystep))
     if legend:
-        leftaxis.legend()
+        if legend_fontsize:
+            leftaxis.legend(fontsize=legend_fontsize)
+        else:
+            leftaxis.legend()
 
     if save:
         plt.savefig(get_figure_path(pic_name), dpi=600, bbox_inches="tight")
@@ -414,6 +418,7 @@ class QueueSizeQ1Plotter(BasePlotter):
             ],
             ystep=15000,
             xstep=300,
+            legend_fontsize=14,
         )
 
 
@@ -494,8 +499,8 @@ def main():
     print("Data updated.")
 
     queue_plot_configs = {
-        "queue_size_total": False,
-        "queue_size_q1": False,
+        "queue_size_total": True,
+        "queue_size_q1": True,
         "queue_size_q2": True,
     }
 
