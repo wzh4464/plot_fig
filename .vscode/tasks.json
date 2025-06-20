@@ -95,6 +95,39 @@
             "command": "python",
             "args": ["draw.py", "update_data"],
             "problemMatcher": []
+        },
+        {
+            "label": "Plot: Combined Throughput",
+            "type": "shell",
+            "command": "python",
+            "args": ["draw.py", "combined_throughput"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Plot: Combined Latency",
+            "type": "shell",
+            "command": "python",
+            "args": ["draw.py", "combined_latency"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Plot: Combined Queue",
+            "type": "shell",
+            "command": "python",
+            "args": ["draw.py", "combined_queue"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Plot: All Combined",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "draw.py",
+                "combined_throughput",
+                "combined_latency",
+                "combined_queue"
+            ],
+            "problemMatcher": []
         }
     ]
 } 

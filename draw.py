@@ -74,13 +74,20 @@ def plot_beta(
     ytick_k=False,
     xlim=1000000,
     xscale=5,
+    ax=None,
+    show_legend=True,
 ):
     colorlist = ["orange", "red", "grey", "black", "blue", "green"]
     markerlist = ["o", "^", "x", "s"]
     x = data[0, :]
     ynum = np.size(data, 0) - 1
     y = data[1 : ynum + 1, :]
-    fig, leftaxis = plt.subplots(figsize=(6, 4))
+    if ax is None:
+        fig, leftaxis = plt.subplots(figsize=(6, 4))
+    else:
+        leftaxis = ax
+        fig = ax.get_figure()
+
     for i in range(ynum):
         leftaxis.plot(
             x,
@@ -100,7 +107,8 @@ def plot_beta(
     leftaxis.set_ylim(0, ylim)
     leftaxis.set_xticks(x, x.astype(int))
     # print(x)
-    leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.25), ncol=3)
+    if show_legend:
+        leftaxis.legend(loc="upper center", bbox_to_anchor=(0.1, 0), ncol=3)
     if ytick_k:
         plt.yticks(
             np.linspace(0, xlim, xscale + 1),
@@ -108,7 +116,7 @@ def plot_beta(
         )
         plt.xticks(np.linspace(8, 64, 8))
         leftaxis.set_xlim(4, 68)
-    if save:
+    if ax is None and save:
         plt.savefig(get_figure_path(pic_name), dpi=600, bbox_inches="tight")
     # plt.show()
 
@@ -127,12 +135,19 @@ def plot_line_with_markers(
     markerlist=["x", "s", "o", "^", "v", "1"],
     xstep=None,
     k_bool=False,
+    ax=None,
+    show_legend=True,
 ):
     x = data[0, :]
     ynum = np.size(data, 0) - 1
     y = data[1 : ynum + 1, :]
-    fig, leftaxis = plt.subplots(figsize=(6, 4))
-    
+
+    if ax is None:
+        fig, leftaxis = plt.subplots(figsize=(6, 4))
+    else:
+        leftaxis = ax
+        fig = ax.get_figure()
+
     x_plot = x / 1000 if k_bool else x
 
     for i in range(ynum):
@@ -173,9 +188,10 @@ def plot_line_with_markers(
     if ytick_step:
         leftaxis.set_yticks(np.arange(0, ylim + 1, ytick_step))
 
-    leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.25), ncol=3)
+    if show_legend:
+        leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.25), ncol=3)
 
-    if save:
+    if ax is None and save:
         plt.savefig(get_figure_path(pic_name), dpi=600, bbox_inches="tight")
     # plt.show()
 
@@ -191,16 +207,22 @@ def plot_time_series(
     labellist,
     xstep,
     ystep,
-    legend=True,
+    show_legend=True,
     linewidth=2,
     legend_fontsize=None,
+    ax=None,
 ):
     x = data[0, :]
     ynum = np.size(data, 0) - 1
     y = data[1 : ynum + 1, :]
-    fig, leftaxis = plt.subplots(figsize=(6, 4))
+    if ax is None:
+        fig, leftaxis = plt.subplots(figsize=(6, 4))
+    else:
+        leftaxis = ax
+        fig = ax.get_figure()
+
     for i in range(ynum):
-        if legend:
+        if show_legend:
             leftaxis.plot(x, y[i, :], label=labellist[i], zorder=2, linewidth=linewidth)
         else:
             leftaxis.plot(x, y[i, :], zorder=2, linewidth=linewidth)
@@ -214,7 +236,7 @@ def plot_time_series(
     leftaxis.set_ylim(0, ylim)
     leftaxis.set_xticks(np.arange(0, xlim + 1, xstep))
     leftaxis.set_yticks(np.arange(0, ylim + 1, ystep))
-    if legend:
+    if show_legend:
         if legend_fontsize:
             leftaxis.legend(
                 loc="upper center",
@@ -225,7 +247,7 @@ def plot_time_series(
         else:
             leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.25), ncol=4)
 
-    if save:
+    if ax is None and save:
         plt.savefig(get_figure_path(pic_name), dpi=600, bbox_inches="tight")
     # plt.show()
 
@@ -244,7 +266,7 @@ class BasePlotter:
     def _load_and_prepare_data(self):
         raise NotImplementedError
 
-    def plot(self):
+    def plot(self, ax=None, show_legend=True):
         raise NotImplementedError
 
 
@@ -255,18 +277,20 @@ class CrossShardTxsPlotter(BasePlotter):
         data = np.transpose(data)
         return data.astype(int)
 
-    def plot(self):
+    def plot(self, ax=None, show_legend=True):
         data = self._load_and_prepare_data()
         plot_beta(
             data=data,
             pic_name="ncr-nshard",
-            save=self.save,
+            save=self.save and ax is None,
             xlabel="Number of Shards",
             ylabel=r"Num of Cross-shard TXs",
             text_location=30000,
             xlim=1000000,
             ylim=1100000,
             labellist=["Random", "X-shard", "cross-shard tx"],
+            ax=ax,
+            show_legend=show_legend,
         )
 
 
@@ -276,18 +300,20 @@ class ThroughputVsShardsPlotter(BasePlotter):
         data = np.transpose(data)
         return data.round(1)
 
-    def plot(self):
+    def plot(self, ax=None, show_legend=True):
         data = self._load_and_prepare_data()
         plot_line_with_markers(
             data=data,
             pic_name="throughtput",
-            save=self.save,
+            save=self.save and ax is None,
             xlabel="Number of Shards",
             ylabel="Throughput (tps)",
             ylim=3500,
             labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
             ytick_step=500,
             markersize=6,
+            ax=ax,
+            show_legend=show_legend,
         )
 
 
@@ -297,12 +323,12 @@ class LatencyVsShardsPlotter(BasePlotter):
         data = np.transpose(df.to_numpy())
         return data.round(1)
 
-    def plot(self):
+    def plot(self, ax=None, show_legend=True):
         data = self._load_and_prepare_data()
         plot_line_with_markers(
             data=data,
             pic_name="latency",
-            save=self.save,
+            save=self.save and ax is None,
             xlabel="Number of Shards",
             ylabel="Latency (ms)",
             ylim=1600,
@@ -310,6 +336,8 @@ class LatencyVsShardsPlotter(BasePlotter):
             ytick_step=200,
             colorlist=["orange", "red", "grey"],
             markerlist=["o", "^", "x"],
+            ax=ax,
+            show_legend=show_legend,
         )
 
 
@@ -319,17 +347,19 @@ class ThroughputVsBlkSizePlotter(BasePlotter):
         data = np.transpose(data)
         return data.round(1)
 
-    def plot(self):
+    def plot(self, ax=None, show_legend=True):
         data = self._load_and_prepare_data()
         plot_line_with_markers(
             data=data,
             pic_name="blk_size_throughput",
-            save=self.save,
+            save=self.save and ax is None,
             xlabel="Block Size (TX)",
             ylabel="Throughput (tps)",
             ylim=4000,
             labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
             ytick_step=500,
+            ax=ax,
+            show_legend=show_legend,
         )
 
 
@@ -339,12 +369,12 @@ class LatencyVsBlkSizePlotter(BasePlotter):
         data = np.transpose(df.to_numpy())
         return data.round(1)
 
-    def plot(self):
+    def plot(self, ax=None, show_legend=True):
         data = self._load_and_prepare_data()
         plot_line_with_markers(
             data=data,
             pic_name="latency-blksize",
-            save=self.save,
+            save=self.save and ax is None,
             xlabel="Block Size(TX)",
             ylabel="Latency (ms)",
             ylim=1600,
@@ -352,6 +382,8 @@ class LatencyVsBlkSizePlotter(BasePlotter):
             ytick_step=200,
             colorlist=["orange", "red", "grey"],
             markerlist=["o", "^", "x"],
+            ax=ax,
+            show_legend=show_legend,
         )
 
 
@@ -359,18 +391,20 @@ class ThroughputVsTxArrivalPlotter(BasePlotter):
     def _load_and_prepare_data(self):
         return (np.transpose(np.loadtxt("source/th_txar.txt"))).round(1)
 
-    def plot(self):
+    def plot(self, ax=None, show_legend=True):
         data = self._load_and_prepare_data()
         plot_line_with_markers(
             data=data,
             pic_name="throughput-txarate",
-            save=self.save,
+            save=self.save and ax is None,
             xlabel="TX Arrival Rate (tps)",
             ylabel="Throughput (tps)",
             ylim=1400,
             labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
             ytick_step=200,
             xstep=1000,
+            ax=ax,
+            show_legend=show_legend,
         )
 
 
@@ -380,12 +414,12 @@ class LatencyVsTxArrivalPlotter(BasePlotter):
         data = np.transpose(df.to_numpy())
         return data.round(1)
 
-    def plot(self):
+    def plot(self, ax=None, show_legend=True):
         data = self._load_and_prepare_data()
         plot_line_with_markers(
             data=data,
             pic_name="latency-txar",
-            save=self.save,
+            save=self.save and ax is None,
             xlabel="TX Arrival Rate ($10^3$ tps)",
             ylabel="Latency (ms)",
             ylim=700,
@@ -395,6 +429,8 @@ class LatencyVsTxArrivalPlotter(BasePlotter):
             markerlist=["o", "^", "x"],
             xstep=500,
             k_bool=True,
+            ax=ax,
+            show_legend=show_legend,
         )
 
 
@@ -403,12 +439,12 @@ class QueueSizeTotalPlotter(BasePlotter):
         data = np.genfromtxt("../txrate_xshard/qtb.txt")
         return data[:, ::10]
 
-    def plot(self):
+    def plot(self, ax=None, show_legend=True):
         data = self._load_and_prepare_data()
         plot_time_series(
             data=data,
             pic_name="qtb",
-            save=self.save,
+            save=self.save and ax is None,
             xlabel="Time (sec)",
             ylabel="Queue Size (TX)",
             xlim=2100,
@@ -424,6 +460,8 @@ class QueueSizeTotalPlotter(BasePlotter):
             ],
             xstep=500,
             ystep=5000,
+            ax=ax,
+            show_legend=show_legend,
         )
 
 
@@ -431,12 +469,12 @@ class QueueSizeQ1Plotter(BasePlotter):
     def _load_and_prepare_data(self):
         return np.genfromtxt("../txrate_xshard/q1.txt")
 
-    def plot(self):
+    def plot(self, ax=None, show_legend=True):
         data = self._load_and_prepare_data()
         plot_time_series(
             data=data,
             pic_name="q1",
-            save=self.save,
+            save=self.save and ax is None,
             xlabel="Time (sec)",
             ylabel="Queue Size (TX)",
             xlim=2100,
@@ -453,6 +491,8 @@ class QueueSizeQ1Plotter(BasePlotter):
             ystep=15000,
             xstep=500,
             legend_fontsize=14,
+            ax=ax,
+            show_legend=show_legend,
         )
 
 
@@ -460,12 +500,12 @@ class QueueSizeQ2Plotter(BasePlotter):
     def _load_and_prepare_data(self):
         return np.genfromtxt("../txrate_xshard/q2.txt")
 
-    def plot(self):
+    def plot(self, ax=None, show_legend=True):
         data = self._load_and_prepare_data()
         plot_time_series(
             data=data,
             pic_name="q2",
-            save=self.save,
+            save=self.save and ax is None,
             xlabel="Time (sec)",
             ylabel="Queue Size (TX)",
             xlim=2100,
@@ -481,8 +521,78 @@ class QueueSizeQ2Plotter(BasePlotter):
             ],
             ystep=15000,
             xstep=500,
-            legend=False,
+            show_legend=False,  # This plotter specifically hides legend
+            ax=ax,
         )
+
+
+# --------------------------------------------------------------------------------
+# Combined Plotting Functions
+# --------------------------------------------------------------------------------
+class CombinedThroughputPlotter(BasePlotter):
+    def plot(self, ax=None, show_legend=True):
+        fig, axes = plt.subplots(1, 3, figsize=(18, 4.5))
+        # fig.suptitle("Throughput Analysis", fontsize=32, y=1.08)
+
+        # Plot 1: Throughput vs Shards
+        ThroughputVsShardsPlotter().plot(ax=axes[0], show_legend=False)
+
+        # Plot 2: Throughput vs Block Size (with legend)
+        ThroughputVsBlkSizePlotter().plot(ax=axes[1], show_legend=True)
+
+        # Plot 3: Throughput vs Tx Arrival
+        ThroughputVsTxArrivalPlotter().plot(ax=axes[2], show_legend=False)
+
+        # Increase margins to avoid clipping of y-labels and suptitle
+        fig.subplots_adjust(left=0.10, right=0.98, top=0.85, bottom=0.10, wspace=0.4)
+
+        if self.save:
+            plt.savefig(get_figure_path("combined_throughput"), dpi=600, bbox_inches="tight")
+        # plt.show()
+
+
+class CombinedLatencyPlotter(BasePlotter):
+    def plot(self, ax=None, show_legend=True):
+        fig, axes = plt.subplots(1, 3, figsize=(18, 4.5))
+        # fig.suptitle("Latency Analysis", fontsize=32, y=1.08)
+
+        # Plot 1: Latency vs Shards
+        LatencyVsShardsPlotter().plot(ax=axes[0], show_legend=False)
+
+        # Plot 2: Latency vs Block Size (with legend)
+        LatencyVsBlkSizePlotter().plot(ax=axes[1], show_legend=True)
+
+        # Plot 3: Latency vs Tx Arrival
+        LatencyVsTxArrivalPlotter().plot(ax=axes[2], show_legend=False)
+
+        # Increase margins to avoid clipping of y-labels and suptitle
+        fig.subplots_adjust(left=0.10, right=0.98, top=0.85, bottom=0.10, wspace=0.4)
+
+        if self.save:
+            plt.savefig(get_figure_path("combined_latency"), dpi=600, bbox_inches="tight")
+        # plt.show()
+
+
+class CombinedQueueSizePlotter(BasePlotter):
+    def plot(self, ax=None, show_legend=True):
+        fig, axes = plt.subplots(1, 3, figsize=(18, 4.5))
+        # fig.suptitle("Queue Size Analysis", fontsize=32, y=1.08)
+
+        # Plot 1: Queue Size Q1
+        QueueSizeQ1Plotter().plot(ax=axes[0], show_legend=False)
+
+        # Plot 2: Queue Size Total (with legend)
+        QueueSizeTotalPlotter().plot(ax=axes[1], show_legend=True)
+
+        # Plot 3: Queue Size Q2 (no legend by default)
+        QueueSizeQ2Plotter().plot(ax=axes[2], show_legend=False)
+
+        # Increase margins to avoid clipping of y-labels and suptitle
+        fig.subplots_adjust(left=0.10, right=0.98, top=0.85, bottom=0.10, wspace=0.4)
+
+        if self.save:
+            plt.savefig(get_figure_path("combined_queue"), dpi=600, bbox_inches="tight")
+        # plt.show()
 
 
 class PlotFactory:
@@ -498,6 +608,9 @@ class PlotFactory:
             "queue_size_total": QueueSizeTotalPlotter,
             "queue_size_q1": QueueSizeQ1Plotter,
             "queue_size_q2": QueueSizeQ2Plotter,
+            "combined_throughput": CombinedThroughputPlotter,
+            "combined_latency": CombinedLatencyPlotter,
+            "combined_queue": CombinedQueueSizePlotter,
         }
 
     def create_plotter(self, plot_type, save=True):
@@ -516,69 +629,75 @@ def main():
 
     parser = argparse.ArgumentParser(description="Generate plots from experiment data.")
     parser.add_argument(
-        "task",
-        nargs="?",
-        default="all",
-        help=f"The task to run. Choose from: {', '.join(available_tasks)}. "
+        "tasks",
+        nargs="+",
+        default=["all"],
+        help=f"The task(s) to run. Choose from: {', '.join(available_tasks)}. "
         'If no task is specified, "all" will be executed.',
     )
     args = parser.parse_args()
-    task_to_run = args.task
+    tasks_to_run = args.tasks
 
-    if task_to_run == "all":
-        # The original "run all" logic
-        plot_configs = {
-            "cross_shard_txs": False,
-            "throughput_vs_shards": True,
-            "latency_vs_shards": True,
-            "throughput_vs_blk_size": True,
-            "latency_vs_blk_size": True,
-            "throughput_vs_tx_arrival": True,
-            "latency_vs_tx_arrival": True,
-        }
-        for name, save_flag in plot_configs.items():
-            print(f"Running task: {name}...")
-            plotter = plot_factory.create_plotter(name, save=save_flag)
+    if "all" in tasks_to_run and len(tasks_to_run) > 1:
+        print("Warning: 'all' task was specified with other tasks. Only 'all' will be run.")
+        tasks_to_run = ["all"]
+
+    for task_to_run in tasks_to_run:
+        if task_to_run == "all":
+            # The original "run all" logic
+            plot_configs = {
+                "cross_shard_txs": False,
+                "throughput_vs_shards": True,
+                "latency_vs_shards": True,
+                "throughput_vs_blk_size": True,
+                "latency_vs_blk_size": True,
+                "throughput_vs_tx_arrival": True,
+                "latency_vs_tx_arrival": True,
+            }
+            for name, save_flag in plot_configs.items():
+                print(f"Running task: {name}...")
+                plotter = plot_factory.create_plotter(name, save=save_flag)
+                plotter.plot()
+                print(f"Finished task: {name}")
+
+            print("Updating data from git repo...")
+            repo_path = os.path.expanduser("~/codes/txrate_xshard")
+            if os.path.isdir(repo_path):
+                os.system(f"cd {repo_path} && git pull")
+                print("Data updated.")
+            else:
+                print(f"Warning: Directory not found at {repo_path}. Skipping data update.")
+
+            queue_plot_configs = {
+                "queue_size_total": True,
+                "queue_size_q1": True,
+                "queue_size_q2": True,
+            }
+            for name, save_flag in queue_plot_configs.items():
+                print(f"Running task: {name}...")
+                plotter = plot_factory.create_plotter(name, save=save_flag)
+                plotter.plot()
+                print(f"Finished task: {name}")
+
+        elif task_to_run in all_tasks:
+            print(f"Running task: {task_to_run}...")
+            plotter = plot_factory.create_plotter(task_to_run, save=True)
             plotter.plot()
-            print(f"Finished task: {name}")
+            print(f"Finished task: {task_to_run}")
 
-        print("Updating data from git repo...")
-        repo_path = os.path.expanduser("~/codes/txrate_xshard")
-        if os.path.isdir(repo_path):
-            os.system(f"cd {repo_path} && git pull")
-            print("Data updated.")
+        elif task_to_run == "update_data":
+            print("Updating data from git repo...")
+            repo_path = os.path.expanduser("~/codes/txrate_xshard")
+            if os.path.isdir(repo_path):
+                os.system(f"cd {repo_path} && git pull")
+                print("Data updated.")
+            else:
+                print(f"Warning: Directory not found at {repo_path}. Skipping data update.")
+
         else:
-            print(f"Warning: Directory not found at {repo_path}. Skipping data update.")
-
-        queue_plot_configs = {
-            "queue_size_total": True,
-            "queue_size_q1": True,
-            "queue_size_q2": True,
-        }
-        for name, save_flag in queue_plot_configs.items():
-            print(f"Running task: {name}...")
-            plotter = plot_factory.create_plotter(name, save=save_flag)
-            plotter.plot()
-            print(f"Finished task: {name}")
-
-    elif task_to_run in all_tasks:
-        print(f"Running task: {task_to_run}...")
-        plotter = plot_factory.create_plotter(task_to_run, save=True)
-        plotter.plot()
-        print(f"Finished task: {task_to_run}")
-
-    elif task_to_run == "update_data":
-        print("Updating data from git repo...")
-        repo_path = os.path.expanduser("~/codes/txrate_xshard")
-        if os.path.isdir(repo_path):
-            os.system(f"cd {repo_path} && git pull")
-            print("Data updated.")
-        else:
-            print(f"Warning: Directory not found at {repo_path}. Skipping data update.")
-
-    else:
-        print(f"Unknown task: {task_to_run}. Please choose from {available_tasks}")
+            print(f"Unknown task: {task_to_run}. Please choose from {available_tasks}")
 
 
 if __name__ == "__main__":
+    plt.close("all")
     main()
