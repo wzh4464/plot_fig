@@ -397,7 +397,7 @@ class QueueSizeTotalPlotter(BasePlotter):
                 "300 TXs",
                 "350 TXs",
             ],
-            xstep=300,
+            xstep=500,
             ystep=5000,
         )
 
@@ -426,7 +426,7 @@ class QueueSizeQ1Plotter(BasePlotter):
                 "56 shards",
             ],
             ystep=15000,
-            xstep=300,
+            xstep=500,
             legend_fontsize=14,
         )
 
@@ -455,7 +455,7 @@ class QueueSizeQ2Plotter(BasePlotter):
                 "56 shards",
             ],
             ystep=15000,
-            xstep=300,
+            xstep=500,
             legend=False,
         )
 
