@@ -1,0 +1,100 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run All Plotting Tasks",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "draw.py",
+                "all"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Plot: Cross Shard Txs",
+            "type": "shell",
+            "command": "python",
+            "args": ["draw.py", "cross_shard_txs"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Plot: Throughput vs Shards",
+            "type": "shell",
+            "command": "python",
+            "args": ["draw.py", "throughput_vs_shards"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Plot: Latency vs Shards",
+            "type": "shell",
+            "command": "python",
+            "args": ["draw.py", "latency_vs_shards"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Plot: Throughput vs Block Size",
+            "type": "shell",
+            "command": "python",
+            "args": ["draw.py", "throughput_vs_blk_size"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Plot: Latency vs Block Size",
+            "type": "shell",
+            "command": "python",
+            "args": ["draw.py", "latency_vs_blk_size"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Plot: Throughput vs Tx Arrival",
+            "type": "shell",
+            "command": "python",
+            "args": ["draw.py", "throughput_vs_tx_arrival"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Plot: Latency vs Tx Arrival",
+            "type": "shell",
+            "command": "python",
+            "args": ["draw.py", "latency_vs_tx_arrival"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Plot: Queue Size Total",
+            "type": "shell",
+            "command": "python",
+            "args": ["draw.py", "queue_size_total"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Plot: Queue Size Q1",
+            "type": "shell",
+            "command": "python",
+            "args": ["draw.py", "queue_size_q1"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Plot: Queue Size Q2",
+            "type": "shell",
+            "command": "python",
+            "args": ["draw.py", "queue_size_q2"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Update Data",
+            "type": "shell",
+            "command": "python",
+            "args": ["draw.py", "update_data"],
+            "problemMatcher": []
+        }
+    ]
+} 
