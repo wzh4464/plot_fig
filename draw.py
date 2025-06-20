@@ -3,7 +3,7 @@
 # Created Date: Friday, June 20th 2025
 # Author: Zihan
 # -----
-# Last Modified: Friday, 20th June 2025 5:04:26 pm
+# Last Modified: Friday, 20th June 2025 5:35:57 pm
 # Modified By: the developer formerly known as Zihan at <wzh4464@gmail.com>
 # -----
 # HISTORY:
@@ -18,7 +18,14 @@ import os
 import time
 import pandas as pd
 
-plt.rcParams.update({"text.usetex": False, "font.family": "Times", "font.size": 24})
+plt.rcParams.update(
+    {
+        "text.usetex": False,
+        "font.family": "Times",
+        "font.size": 24,
+        "legend.fontsize": 16,
+    }
+)
 
 # %%
 
@@ -180,8 +187,7 @@ def plot_time_series(
     leftaxis.set_xticks(np.arange(0, xlim + 1, xstep))
     leftaxis.set_yticks(np.arange(0, ylim + 1, ystep))
     if legend:
-        plt.rc("legend")
-        lg = leftaxis.legend()
+        leftaxis.legend()
 
     if save:
         plt.savefig(get_figure_path(pic_name), dpi=600, bbox_inches="tight")
@@ -307,6 +313,8 @@ class LatencyVsBlkSizePlotter(BasePlotter):
             ylim=1600,
             labellist=["Cross-shard TX", "Intra-shard TX", "Overall TX"],
             ytick_step=200,
+            colorlist=["orange", "red", "grey"],
+            markerlist=["o", "^", "x"],
         )
 
 
