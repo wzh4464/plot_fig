@@ -125,6 +125,7 @@ def plot_line_with_markers(
     markersize=8,
     colorlist=["grey", "blue", "orange", "black", "red", "green"],
     markerlist=["x", "s", "o", "^", "v", "1"],
+    xstep=None,
 ):
     x = data[0, :]
     ynum = np.size(data, 0) - 1
@@ -148,6 +149,8 @@ def plot_line_with_markers(
     leftaxis.set_ylabel(ylabel)
     leftaxis.set_ylim(0, ylim)
     leftaxis.set_xticks(x, x.astype(int))
+    if xstep:
+        leftaxis.set_xticks(np.arange(x.min(), x.max() + 1, xstep))
     if ytick_step:
         leftaxis.set_yticks(np.arange(0, ylim + 1, ytick_step))
 
@@ -348,6 +351,7 @@ class ThroughputVsTxArrivalPlotter(BasePlotter):
             ylim=1400,
             labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
             ytick_step=200,
+            xstep=1000,
         )
 
 
