@@ -3,7 +3,7 @@
 # Created Date: Friday, June 20th 2025
 # Author: Zihan
 # -----
-# Last Modified: Friday, 20th June 2025 4:58:03 pm
+# Last Modified: Friday, 20th June 2025 5:04:26 pm
 # Modified By: the developer formerly known as Zihan at <wzh4464@gmail.com>
 # -----
 # HISTORY:
@@ -193,233 +193,303 @@ def plot_time_series(
 # --------------------------------------------------------------------------------
 
 
-def plot_cross_shard_txs():
-    data = np.genfromtxt("cr-tx.csv", delimiter=",")
-    data = np.delete(data, 0, axis=0)
-    data = np.transpose(data)
-    data = data.astype(int)
-    plot_beta(
-        data=data,
-        pic_name="ncr-nshard",
-        save=True,
-        xlabel="Number of Shards",
-        ylabel=r"Num of Cross-shard TXs",
-        text_location=30000,
-        xlim=1000000,
-        ylim=1100000,
-        labellist=["Random", "X-shard", "cross-shard tx"],
-    )
+class BasePlotter:
+    """Base class for all plotters."""
+
+    def __init__(self, save=True):
+        self.save = save
+
+    def _load_and_prepare_data(self):
+        raise NotImplementedError
+
+    def plot(self):
+        raise NotImplementedError
 
 
-def plot_throughput_vs_shards():
-    data = np.loadtxt("source/result.txt")
-    data = np.transpose(data)
-    data = data.round(1)
-    plot_line_with_markers(
-        data=data,
-        pic_name="throughtput",
-        save=True,
-        xlabel="Number of Shards",
-        ylabel="Throughput (tps)",
-        ylim=3500,
-        labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
-        ytick_step=500,
-        markersize=6,
-    )
+class CrossShardTxsPlotter(BasePlotter):
+    def _load_and_prepare_data(self):
+        data = np.genfromtxt("cr-tx.csv", delimiter=",")
+        data = np.delete(data, 0, axis=0)
+        data = np.transpose(data)
+        return data.astype(int)
+
+    def plot(self):
+        data = self._load_and_prepare_data()
+        plot_beta(
+            data=data,
+            pic_name="ncr-nshard",
+            save=self.save,
+            xlabel="Number of Shards",
+            ylabel=r"Num of Cross-shard TXs",
+            text_location=30000,
+            xlim=1000000,
+            ylim=1100000,
+            labellist=["Random", "X-shard", "cross-shard tx"],
+        )
 
 
-def plot_latency_vs_shards():
-    df = pd.read_csv("source/latency.csv")
-    data = np.transpose(df.to_numpy())
-    data = data.round(1)
-    plot_line_with_markers(
-        data=data,
-        pic_name="latency",
-        save=True,
-        xlabel="Number of Shards",
-        ylabel="Latency (ms)",
-        ylim=1600,
-        labellist=["Cross-shard TX", "Intra-shard TX", "Overall TX"],
-        ytick_step=200,
-    )
+class ThroughputVsShardsPlotter(BasePlotter):
+    def _load_and_prepare_data(self):
+        data = np.loadtxt("source/result.txt")
+        data = np.transpose(data)
+        return data.round(1)
+
+    def plot(self):
+        data = self._load_and_prepare_data()
+        plot_line_with_markers(
+            data=data,
+            pic_name="throughtput",
+            save=self.save,
+            xlabel="Number of Shards",
+            ylabel="Throughput (tps)",
+            ylim=3500,
+            labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
+            ytick_step=500,
+            markersize=6,
+        )
 
 
-def plot_throughput_vs_blk_size():
-    data = np.loadtxt("source/blk_size.txt")
-    data = np.transpose(data)
-    data = data.round(1)
-    plot_line_with_markers(
-        data=data,
-        pic_name="blk_size_throughput",
-        save=True,
-        xlabel="Block Size (TX)",
-        ylabel="Throughput (tps)",
-        ylim=4000,
-        labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
-        ytick_step=500,
-        markersize=None,
-    )
+class LatencyVsShardsPlotter(BasePlotter):
+    def _load_and_prepare_data(self):
+        df = pd.read_csv("source/latency.csv")
+        data = np.transpose(df.to_numpy())
+        return data.round(1)
+
+    def plot(self):
+        data = self._load_and_prepare_data()
+        plot_line_with_markers(
+            data=data,
+            pic_name="latency",
+            save=self.save,
+            xlabel="Number of Shards",
+            ylabel="Latency (ms)",
+            ylim=1600,
+            labellist=["Cross-shard TX", "Intra-shard TX", "Overall TX"],
+            ytick_step=200,
+        )
 
 
-def plot_latency_vs_blk_size():
-    df = pd.read_csv("source/latency_blksize.csv")
-    data = np.transpose(df.to_numpy())
-    data = data.round(1)
-    plot_line_with_markers(
-        data=data,
-        pic_name="latency-blksize",
-        save=True,
-        xlabel="Block Size(TX)",
-        ylabel="Latency (ms)",
-        ylim=1600,
-        labellist=["Cross-shard TX", "Intra-shard TX", "Overall TX"],
-        ytick_step=200,
-    )
+class ThroughputVsBlkSizePlotter(BasePlotter):
+    def _load_and_prepare_data(self):
+        data = np.loadtxt("source/blk_size.txt")
+        data = np.transpose(data)
+        return data.round(1)
+
+    def plot(self):
+        data = self._load_and_prepare_data()
+        plot_line_with_markers(
+            data=data,
+            pic_name="blk_size_throughput",
+            save=self.save,
+            xlabel="Block Size (TX)",
+            ylabel="Throughput (tps)",
+            ylim=4000,
+            labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
+            ytick_step=500,
+            markersize=None,
+        )
 
 
-def plot_throughput_vs_tx_arrival():
-    data = (np.transpose(np.loadtxt("source/th_txar.txt"))).round(1)
-    plot_line_with_markers(
-        data=data,
-        pic_name="throughput-txarate",
-        save=True,
-        xlabel="TX Arrival Rate (tps)",
-        ylabel="Throughput (tps)",
-        ylim=1400,
-        labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
-        ytick_step=200,
-    )
+class LatencyVsBlkSizePlotter(BasePlotter):
+    def _load_and_prepare_data(self):
+        df = pd.read_csv("source/latency_blksize.csv")
+        data = np.transpose(df.to_numpy())
+        return data.round(1)
+
+    def plot(self):
+        data = self._load_and_prepare_data()
+        plot_line_with_markers(
+            data=data,
+            pic_name="latency-blksize",
+            save=self.save,
+            xlabel="Block Size(TX)",
+            ylabel="Latency (ms)",
+            ylim=1600,
+            labellist=["Cross-shard TX", "Intra-shard TX", "Overall TX"],
+            ytick_step=200,
+        )
 
 
-def plot_latency_vs_tx_arrival():
-    df = pd.read_csv("source/latency_txar.txt")
-    data = np.transpose(df.to_numpy())
-    data = data.round(1)
-    plot_line_with_markers(
-        data=data,
-        pic_name="latency-txar",
-        save=True,
-        xlabel="TX Arrival Rate (tps)",
-        ylabel="Latency (ms)",
-        ylim=700,
-        labellist=["Cross-shard TX", "Intra-shard TX", "Overall TX"],
-        ytick_step=150,
-    )
+class ThroughputVsTxArrivalPlotter(BasePlotter):
+    def _load_and_prepare_data(self):
+        return (np.transpose(np.loadtxt("source/th_txar.txt"))).round(1)
+
+    def plot(self):
+        data = self._load_and_prepare_data()
+        plot_line_with_markers(
+            data=data,
+            pic_name="throughput-txarate",
+            save=self.save,
+            xlabel="TX Arrival Rate (tps)",
+            ylabel="Throughput (tps)",
+            ylim=1400,
+            labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
+            ytick_step=200,
+        )
 
 
-def plot_queue_size_total():
-    data = np.genfromtxt("../txrate_xshard/qtb.txt")
-    print(data.shape)
-    # data=np.transpose(data)
-    simpledata = data[:, ::10]
-    print(simpledata.shape)
-    plot_time_series(
-        data=simpledata,
-        pic_name="qtb",
-        save=False,
-        xlabel="Time (sec)",
-        ylabel="Queue Size (TX)",
-        xlim=2100,
-        ylim=44000,
-        labellist=[
-            "50 TXs",
-            "100 TXs",
-            "150 TXs",
-            "200 TXs",
-            "250 TXs",
-            "300 TXs",
-            "350 TXs",
-        ],
-        xstep=300,
-        ystep=5000,
-    )
+class LatencyVsTxArrivalPlotter(BasePlotter):
+    def _load_and_prepare_data(self):
+        df = pd.read_csv("source/latency_txar.txt")
+        data = np.transpose(df.to_numpy())
+        return data.round(1)
+
+    def plot(self):
+        data = self._load_and_prepare_data()
+        plot_line_with_markers(
+            data=data,
+            pic_name="latency-txar",
+            save=self.save,
+            xlabel="TX Arrival Rate (tps)",
+            ylabel="Latency (ms)",
+            ylim=700,
+            labellist=["Cross-shard TX", "Intra-shard TX", "Overall TX"],
+            ytick_step=150,
+        )
 
 
-def plot_queue_size_q1():
-    q1data = np.genfromtxt("../txrate_xshard/q1.txt")
-    print(q1data.max())
-    plot_time_series(
-        data=q1data,
-        pic_name="q1",
-        save=False,
-        xlabel="Time (sec)",
-        ylabel="Queue Size (TX)",
-        xlim=2100,
-        ylim=q1data.max() * 1.1,
-        labellist=[
-            "8 shards",
-            "16 shards",
-            "24 shards",
-            "32 shards",
-            "40 shards",
-            "48 shards",
-            "56 shards",
-        ],
-        ystep=15000,
-        xstep=300,
-    )
+class QueueSizeTotalPlotter(BasePlotter):
+    def _load_and_prepare_data(self):
+        data = np.genfromtxt("../txrate_xshard/qtb.txt")
+        return data[:, ::10]
+
+    def plot(self):
+        data = self._load_and_prepare_data()
+        plot_time_series(
+            data=data,
+            pic_name="qtb",
+            save=self.save,
+            xlabel="Time (sec)",
+            ylabel="Queue Size (TX)",
+            xlim=2100,
+            ylim=44000,
+            labellist=[
+                "50 TXs",
+                "100 TXs",
+                "150 TXs",
+                "200 TXs",
+                "250 TXs",
+                "300 TXs",
+                "350 TXs",
+            ],
+            xstep=300,
+            ystep=5000,
+        )
 
 
-def plot_queue_size_q2():
-    q2data = np.genfromtxt("../txrate_xshard/q2.txt")
-    plot_time_series(
-        data=q2data,
-        pic_name="q2",
-        save=True,
-        xlabel="Time (sec)",
-        ylabel="Queue Size (TX)",
-        xlim=2100,
-        ylim=q2data.max() * 1.1,
-        labellist=[
-            "8 shards",
-            "16 shards",
-            "24 shards",
-            "32 shards",
-            "40 shards",
-            "48 shards",
-            "56 shards",
-        ],
-        ystep=15000,
-        xstep=300,
-        legend=False,
-    )
+class QueueSizeQ1Plotter(BasePlotter):
+    def _load_and_prepare_data(self):
+        return np.genfromtxt("../txrate_xshard/q1.txt")
+
+    def plot(self):
+        data = self._load_and_prepare_data()
+        plot_time_series(
+            data=data,
+            pic_name="q1",
+            save=self.save,
+            xlabel="Time (sec)",
+            ylabel="Queue Size (TX)",
+            xlim=2100,
+            ylim=data.max() * 1.1,
+            labellist=[
+                "8 shards",
+                "16 shards",
+                "24 shards",
+                "32 shards",
+                "40 shards",
+                "48 shards",
+                "56 shards",
+            ],
+            ystep=15000,
+            xstep=300,
+        )
+
+
+class QueueSizeQ2Plotter(BasePlotter):
+    def _load_and_prepare_data(self):
+        return np.genfromtxt("../txrate_xshard/q2.txt")
+
+    def plot(self):
+        data = self._load_and_prepare_data()
+        plot_time_series(
+            data=data,
+            pic_name="q2",
+            save=self.save,
+            xlabel="Time (sec)",
+            ylabel="Queue Size (TX)",
+            xlim=2100,
+            ylim=data.max() * 1.1,
+            labellist=[
+                "8 shards",
+                "16 shards",
+                "24 shards",
+                "32 shards",
+                "40 shards",
+                "48 shards",
+                "56 shards",
+            ],
+            ystep=15000,
+            xstep=300,
+            legend=False,
+        )
+
+
+class PlotFactory:
+    def __init__(self):
+        self._plotters = {
+            "cross_shard_txs": CrossShardTxsPlotter,
+            "throughput_vs_shards": ThroughputVsShardsPlotter,
+            "latency_vs_shards": LatencyVsShardsPlotter,
+            "throughput_vs_blk_size": ThroughputVsBlkSizePlotter,
+            "latency_vs_blk_size": LatencyVsBlkSizePlotter,
+            "throughput_vs_tx_arrival": ThroughputVsTxArrivalPlotter,
+            "latency_vs_tx_arrival": LatencyVsTxArrivalPlotter,
+            "queue_size_total": QueueSizeTotalPlotter,
+            "queue_size_q1": QueueSizeQ1Plotter,
+            "queue_size_q2": QueueSizeQ2Plotter,
+        }
+
+    def create_plotter(self, plot_type, save=True):
+        plotter_class = self._plotters.get(plot_type)
+        if not plotter_class:
+            raise ValueError(f"Unknown plot type: {plot_type}")
+        return plotter_class(save=save)
 
 
 # %%
 def main():
     """Main function to run all plotting tasks."""
-    # Plot 1: Cross-shard transactions vs. Number of Shards
-    plot_cross_shard_txs()
+    plot_factory = PlotFactory()
 
-    # Plot 2: Throughput vs. Number of Shards
-    plot_throughput_vs_shards()
+    plot_configs = {
+        "cross_shard_txs": True,
+        "throughput_vs_shards": True,
+        "latency_vs_shards": True,
+        "throughput_vs_blk_size": True,
+        "latency_vs_blk_size": True,
+        "throughput_vs_tx_arrival": True,
+        "latency_vs_tx_arrival": True,
+    }
 
-    # Plot 3: Latency vs. Number of Shards
-    plot_latency_vs_shards()
-
-    # Plot 4: Throughput vs. Block Size
-    plot_throughput_vs_blk_size()
-
-    # Plot 5: Latency vs. Block Size
-    plot_latency_vs_blk_size()
-
-    # Plot 6: Throughput vs. TX Arrival Rate
-    plot_throughput_vs_tx_arrival()
-
-    # Plot 7: Latency vs. TX Arrival Rate
-    plot_latency_vs_tx_arrival()
+    for name, save_flag in plot_configs.items():
+        plotter = plot_factory.create_plotter(name, save=save_flag)
+        plotter.plot()
 
     # Update data from git repo
+    # Assuming txrate_xshard is in a specific path relative to home
+    print("Updating data from git repo...")
     os.system("cd ~/codes/txrate_xshard && git pull")
+    print("Data updated.")
 
-    # Plot 8: Total Queue Size
-    plot_queue_size_total()
+    queue_plot_configs = {
+        "queue_size_total": False,
+        "queue_size_q1": False,
+        "queue_size_q2": True,
+    }
 
-    # Plot 9: Queue Size q1
-    plot_queue_size_q1()
-
-    # Plot 10: Queue Size q2
-    plot_queue_size_q2()
+    for name, save_flag in queue_plot_configs.items():
+        plotter = plot_factory.create_plotter(name, save=save_flag)
+        plotter.plot()
 
 
 if __name__ == "__main__":
