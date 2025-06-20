@@ -38,7 +38,7 @@ plt.rcParams.update(
 # "font.sans-serif": ["Helvetica"]})
 plt.rcParams.update(
     {
-        "text.usetex": False,
+        "text.usetex": True,
         # "font.family": "Helvetica"
     }
 )
@@ -126,14 +126,18 @@ def plot_line_with_markers(
     colorlist=["grey", "blue", "orange", "black", "red", "green"],
     markerlist=["x", "s", "o", "^", "v", "1"],
     xstep=None,
+    k_bool=False,
 ):
     x = data[0, :]
     ynum = np.size(data, 0) - 1
     y = data[1 : ynum + 1, :]
     fig, leftaxis = plt.subplots(figsize=(6, 4))
+    
+    x_plot = x / 1000 if k_bool else x
+
     for i in range(ynum):
         leftaxis.plot(
-            x,
+            x_plot,
             y[i, :],
             color=colorlist[i % len(colorlist)],
             label=labellist[i],
@@ -148,9 +152,24 @@ def plot_line_with_markers(
     leftaxis.set_xlabel(xlabel)
     leftaxis.set_ylabel(ylabel)
     leftaxis.set_ylim(0, ylim)
-    leftaxis.set_xticks(x, x.astype(int))
+    
     if xstep:
-        leftaxis.set_xticks(np.arange(x.min(), x.max() + 1, xstep))
+        x_min, x_max = x_plot.min(), x_plot.max()
+        current_xstep = xstep / 1000 if k_bool else xstep
+        
+        # Use a small epsilon to include the max value in the range
+        ticks = np.arange(x_min, x_max + current_xstep * 0.5, current_xstep)
+        leftaxis.set_xticks(ticks)
+
+        if k_bool:
+            leftaxis.set_xticklabels([f"{t}" for t in ticks])
+
+    else:
+        leftaxis.set_xticks(x_plot)
+        if not k_bool:
+            leftaxis.set_xticklabels(x_plot.astype(int))
+
+
     if ytick_step:
         leftaxis.set_yticks(np.arange(0, ylim + 1, ytick_step))
 
@@ -367,13 +386,15 @@ class LatencyVsTxArrivalPlotter(BasePlotter):
             data=data,
             pic_name="latency-txar",
             save=self.save,
-            xlabel="TX Arrival Rate (tps)",
+            xlabel="TX Arrival Rate ($10^3$ tps)",
             ylabel="Latency (ms)",
             ylim=700,
             labellist=["Cross-shard TX", "Intra-shard TX", "Overall TX"],
             ytick_step=150,
             colorlist=["orange", "red", "grey"],
             markerlist=["o", "^", "x"],
+            xstep=500,
+            k_bool=True,
         )
 
 
