@@ -3,7 +3,7 @@
 # Created Date: Friday, June 20th 2025
 # Author: Zihan
 # -----
-# Last Modified: Friday, 20th June 2025 5:39:45 pm
+# Last Modified: Friday, 20th June 2025 5:40:28 pm
 # Modified By: the developer formerly known as Zihan at <wzh4464@gmail.com>
 # -----
 # HISTORY:
@@ -272,6 +272,8 @@ class LatencyVsShardsPlotter(BasePlotter):
             ylim=1600,
             labellist=["Cross-shard TX", "Intra-shard TX", "Overall TX"],
             ytick_step=200,
+            colorlist=["orange", "red", "grey"],
+            markerlist=["o", "^", "x"],
         )
 
 
