@@ -218,7 +218,7 @@ def plot_line_with_markers(
         leftaxis.set_yticks(np.arange(0, ylim_plot + 1, ytick_step_plot))
 
     if show_legend:
-        leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.3), ncol=7)
+        leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.4), ncol=7)
 
     if subtitle:
         fontsize = (
