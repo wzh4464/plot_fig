@@ -23,7 +23,7 @@ plt.rcParams.update(
     {
         "text.usetex": False,
         "font.family": "Times",
-        "font.size": 26,
+        "font.size": 30,
         "legend.fontsize": 26,
     }
 )
@@ -400,6 +400,7 @@ class ThroughputVsBlkSizePlotter(BasePlotter):
             show_legend=show_legend,
             y_div=100,
             y_label_unit=r"($10^2$ tps)",
+            xstep=100,
         )
 
 
@@ -426,6 +427,7 @@ class LatencyVsBlkSizePlotter(BasePlotter):
             show_legend=show_legend,
             y_div=100,
             y_label_unit=r"($10^2$ ms)",
+            xstep=100,
         )
 
 
