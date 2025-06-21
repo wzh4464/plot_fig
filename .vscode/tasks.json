@@ -9,10 +9,6 @@
                 "draw.py",
                 "all"
             ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
             "problemMatcher": [],
             "presentation": {
                 "reveal": "always",
@@ -127,7 +123,11 @@
                 "combined_latency",
                 "combined_queue"
             ],
-            "problemMatcher": []
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 } 
