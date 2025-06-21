@@ -147,6 +147,8 @@ def plot_line_with_markers(
     y_div=1,
     y_label_unit=None,
     x_grid_step=None,
+    subtitle=None,
+    subtitle_fontsize=None,
 ):
     x = data[0, :]
     ynum = np.size(data, 0) - 1
@@ -218,6 +220,14 @@ def plot_line_with_markers(
     if show_legend:
         leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.3), ncol=7)
 
+    if subtitle:
+        fontsize = (
+            subtitle_fontsize
+            if subtitle_fontsize is not None
+            else plt.rcParams["font.size"]
+        )
+        leftaxis.set_title(subtitle, y=-0.45, fontsize=fontsize)
+
     if ax is None and save:
         plt.savefig(get_figure_path(pic_name), dpi=600, bbox_inches="tight")
     # plt.show()
@@ -241,6 +251,8 @@ def plot_time_series(
     legend_ncol=4,
     y_k_bool=False,
     y_label_unit=None,
+    subtitle=None,
+    subtitle_fontsize=None,
 ):
     x = data[0, :]
     ynum = np.size(data, 0) - 1
@@ -290,6 +302,14 @@ def plot_time_series(
             legend_params["fontsize"] = legend_fontsize
         leftaxis.legend(**legend_params)
 
+    if subtitle:
+        fontsize = (
+            subtitle_fontsize
+            if subtitle_fontsize is not None
+            else plt.rcParams["font.size"]
+        )
+        leftaxis.set_title(subtitle, y=-0.45, fontsize=fontsize)
+
     if ax is None and save:
         plt.savefig(get_figure_path(pic_name), dpi=600, bbox_inches="tight")
     # plt.show()
@@ -309,7 +329,7 @@ class BasePlotter:
     def _load_and_prepare_data(self):
         raise NotImplementedError
 
-    def plot(self, ax=None, show_legend=True):
+    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
         raise NotImplementedError
 
 
@@ -320,7 +340,7 @@ class CrossShardTxsPlotter(BasePlotter):
         data = np.transpose(data)
         return data.astype(int)
 
-    def plot(self, ax=None, show_legend=True):
+    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
         data = self._load_and_prepare_data()
         plot_beta(
             data=data,
@@ -345,7 +365,7 @@ class ThroughputVsShardsPlotter(BasePlotter):
         data = np.transpose(data)
         return data.round(1)
 
-    def plot(self, ax=None, show_legend=True):
+    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
         data = self._load_and_prepare_data()
         plot_line_with_markers(
             data=data,
@@ -361,6 +381,8 @@ class ThroughputVsShardsPlotter(BasePlotter):
             show_legend=show_legend,
             y_div=100,
             y_label_unit=r"($10^2$ tps)",
+            subtitle=subtitle,
+            subtitle_fontsize=subtitle_fontsize,
         )
 
 
@@ -370,7 +392,7 @@ class LatencyVsShardsPlotter(BasePlotter):
         data = np.transpose(df.to_numpy())
         return data.round(1)
 
-    def plot(self, ax=None, show_legend=True):
+    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
         data = self._load_and_prepare_data()
         plot_line_with_markers(
             data=data,
@@ -387,6 +409,8 @@ class LatencyVsShardsPlotter(BasePlotter):
             show_legend=show_legend,
             y_div=100,
             y_label_unit=r"($10^2$ ms)",
+            subtitle=subtitle,
+            subtitle_fontsize=subtitle_fontsize,
         )
 
 
@@ -396,7 +420,7 @@ class ThroughputVsBlkSizePlotter(BasePlotter):
         data = np.transpose(data)
         return data.round(1)
 
-    def plot(self, ax=None, show_legend=True):
+    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
         data = self._load_and_prepare_data()
         plot_line_with_markers(
             data=data,
@@ -413,6 +437,8 @@ class ThroughputVsBlkSizePlotter(BasePlotter):
             y_label_unit=r"($10^2$ tps)",
             xstep=100,
             x_grid_step=50,
+            subtitle=subtitle,
+            subtitle_fontsize=subtitle_fontsize,
         )
 
 
@@ -422,7 +448,7 @@ class LatencyVsBlkSizePlotter(BasePlotter):
         data = np.transpose(df.to_numpy())
         return data.round(1)
 
-    def plot(self, ax=None, show_legend=True):
+    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
         data = self._load_and_prepare_data()
         plot_line_with_markers(
             data=data,
@@ -441,6 +467,8 @@ class LatencyVsBlkSizePlotter(BasePlotter):
             y_label_unit=r"($10^2$ ms)",
             xstep=100,
             x_grid_step=50,
+            subtitle=subtitle,
+            subtitle_fontsize=subtitle_fontsize,
         )
 
 
@@ -448,7 +476,7 @@ class ThroughputVsTxArrivalPlotter(BasePlotter):
     def _load_and_prepare_data(self):
         return (np.transpose(np.loadtxt("source/th_txar.txt"))).round(1)
 
-    def plot(self, ax=None, show_legend=True):
+    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
         data = self._load_and_prepare_data()
         plot_line_with_markers(
             data=data,
@@ -465,6 +493,8 @@ class ThroughputVsTxArrivalPlotter(BasePlotter):
             show_legend=show_legend,
             y_div=100,
             y_label_unit=r"($10^2$ ms)",
+            subtitle=subtitle,
+            subtitle_fontsize=subtitle_fontsize,
         )
 
 
@@ -474,7 +504,7 @@ class LatencyVsTxArrivalPlotter(BasePlotter):
         data = np.transpose(df.to_numpy())
         return data.round(1)
 
-    def plot(self, ax=None, show_legend=True):
+    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
         data = self._load_and_prepare_data()
         plot_line_with_markers(
             data=data,
@@ -493,6 +523,8 @@ class LatencyVsTxArrivalPlotter(BasePlotter):
             show_legend=show_legend,
             y_div=100,
             y_label_unit=r"($10^2$ ms)",
+            subtitle=subtitle,
+            subtitle_fontsize=subtitle_fontsize,
         )
 
 
@@ -501,7 +533,7 @@ class QueueSizeTotalPlotter(BasePlotter):
         data = np.genfromtxt("../txrate_xshard/qtb.txt")
         return data[:, ::10]
 
-    def plot(self, ax=None, show_legend=True):
+    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
         data = self._load_and_prepare_data()
         plot_time_series(
             data=data,
@@ -527,6 +559,8 @@ class QueueSizeTotalPlotter(BasePlotter):
             legend_ncol=7,
             y_k_bool=True,
             y_label_unit=r"($10^3$ TX)",
+            subtitle=subtitle,
+            subtitle_fontsize=subtitle_fontsize,
         )
 
 
@@ -534,7 +568,7 @@ class QueueSizeQ1Plotter(BasePlotter):
     def _load_and_prepare_data(self):
         return np.genfromtxt("../txrate_xshard/q1.txt")
 
-    def plot(self, ax=None, show_legend=True):
+    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
         data = self._load_and_prepare_data()
         plot_time_series(
             data=data,
@@ -559,6 +593,8 @@ class QueueSizeQ1Plotter(BasePlotter):
             show_legend=show_legend,
             y_k_bool=True,
             y_label_unit=r"($10^3$ TX)",
+            subtitle=subtitle,
+            subtitle_fontsize=subtitle_fontsize,
         )
 
 
@@ -566,7 +602,7 @@ class QueueSizeQ2Plotter(BasePlotter):
     def _load_and_prepare_data(self):
         return np.genfromtxt("../txrate_xshard/q2.txt")
 
-    def plot(self, ax=None, show_legend=True):
+    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
         data = self._load_and_prepare_data()
         plot_time_series(
             data=data,
@@ -591,6 +627,8 @@ class QueueSizeQ2Plotter(BasePlotter):
             ax=ax,
             y_k_bool=True,
             y_label_unit=r"($10^3$ TX)",
+            subtitle=subtitle,
+            subtitle_fontsize=subtitle_fontsize,
         )
 
 
@@ -598,65 +636,93 @@ class QueueSizeQ2Plotter(BasePlotter):
 # Combined Plotting Functions
 # --------------------------------------------------------------------------------
 class CombinedThroughputPlotter(BasePlotter):
-    def plot(self, ax=None, show_legend=True):
+    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
         fig, axes = plt.subplots(1, 3, figsize=(18, 4.5))
         # fig.suptitle("Throughput Analysis", fontsize=32, y=1.08)
 
         # Plot 1: Throughput vs Shards
-        ThroughputVsShardsPlotter().plot(ax=axes[0], show_legend=False)
+        ThroughputVsShardsPlotter().plot(
+            ax=axes[0], show_legend=False, subtitle="(a) Different Number of Shards"
+        )
 
         # Plot 2: Throughput vs Block Size (with legend)
-        ThroughputVsBlkSizePlotter().plot(ax=axes[1], show_legend=True)
+        ThroughputVsBlkSizePlotter().plot(
+            ax=axes[1], show_legend=True, subtitle="(b) Different TX Arrival Rate"
+        )
 
         # Plot 3: Throughput vs Tx Arrival
-        ThroughputVsTxArrivalPlotter().plot(ax=axes[2], show_legend=False)
+        ThroughputVsTxArrivalPlotter().plot(
+            ax=axes[2], show_legend=False, subtitle="(c) Different Block Size"
+        )
 
         # Increase margins to avoid clipping of y-labels and suptitle
-        fig.subplots_adjust(left=0.10, right=0.98, top=0.85, bottom=0.10, wspace=0.4)
+        fig.subplots_adjust(
+            left=0.10, right=0.98, top=0.85, bottom=0.20, wspace=0.4
+        )
 
         if self.save:
-            plt.savefig(get_figure_path("combined_throughput"), dpi=600, bbox_inches="tight")
+            plt.savefig(
+                get_figure_path("combined_throughput"), dpi=600, bbox_inches="tight"
+            )
         # plt.show()
 
 
 class CombinedLatencyPlotter(BasePlotter):
-    def plot(self, ax=None, show_legend=True):
+    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
         fig, axes = plt.subplots(1, 3, figsize=(18, 4.5))
         # fig.suptitle("Latency Analysis", fontsize=32, y=1.08)
 
         # Plot 1: Latency vs Shards
-        LatencyVsShardsPlotter().plot(ax=axes[0], show_legend=False)
+        LatencyVsShardsPlotter().plot(
+            ax=axes[0], show_legend=False, subtitle="(a) Different Number of Shards"
+        )
 
         # Plot 2: Latency vs Block Size (with legend)
-        LatencyVsBlkSizePlotter().plot(ax=axes[1], show_legend=True)
+        LatencyVsBlkSizePlotter().plot(
+            ax=axes[1], show_legend=True, subtitle="(b) Different Block Size"
+        )
 
         # Plot 3: Latency vs Tx Arrival
-        LatencyVsTxArrivalPlotter().plot(ax=axes[2], show_legend=False)
+        LatencyVsTxArrivalPlotter().plot(
+            ax=axes[2], show_legend=False, subtitle="(c) Different TX Arrival Rate"
+        )
 
         # Increase margins to avoid clipping of y-labels and suptitle
-        fig.subplots_adjust(left=0.10, right=0.98, top=0.85, bottom=0.10, wspace=0.4)
+        fig.subplots_adjust(
+            left=0.10, right=0.98, top=0.85, bottom=0.20, wspace=0.4
+        )
 
         if self.save:
-            plt.savefig(get_figure_path("combined_latency"), dpi=600, bbox_inches="tight")
+            plt.savefig(
+                get_figure_path("combined_latency"), dpi=600, bbox_inches="tight"
+            )
         # plt.show()
 
 
 class CombinedQueueSizePlotter(BasePlotter):
-    def plot(self, ax=None, show_legend=True):
+    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
         fig, axes = plt.subplots(1, 3, figsize=(18, 4.5))
         # fig.suptitle("Queue Size Analysis", fontsize=32, y=1.08)
 
         # Plot 1: Queue Size Q1
-        QueueSizeQ1Plotter().plot(ax=axes[0], show_legend=False)
+        QueueSizeQ1Plotter().plot(
+            ax=axes[0], show_legend=False, subtitle="(a) Eight Shards"
+        )
 
         # Plot 2: Queue Size Total (with legend)
-        QueueSizeTotalPlotter().plot(ax=axes[1], show_legend=True)
+        QueueSizeTotalPlotter().plot(
+            ax=axes[1], show_legend=True, subtitle="(b) Different Number of Shards"
+        )
 
         # Plot 3: Queue Size Q2 (no legend by default)
-        QueueSizeQ2Plotter().plot(ax=axes[2], show_legend=False)
+        QueueSizeQ2Plotter().plot(
+            ax=axes[2], show_legend=False, subtitle="(c) Different Block Size"
+        )
 
         # Increase margins to avoid clipping of y-labels and suptitle
-        fig.subplots_adjust(left=0.10, right=0.98, top=0.85, bottom=0.10, wspace=0.4)
+        fig.subplots_adjust(
+            left=0.10, right=0.98, top=0.85, bottom=0.20, wspace=0.4
+        )
 
         if self.save:
             plt.savefig(get_figure_path("combined_queue"), dpi=600, bbox_inches="tight")
