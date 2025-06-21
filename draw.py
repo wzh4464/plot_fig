@@ -146,6 +146,7 @@ def plot_line_with_markers(
     show_legend=True,
     y_div=1,
     y_label_unit=None,
+    x_grid_step=None,
 ):
     x = data[0, :]
     ynum = np.size(data, 0) - 1
@@ -177,29 +178,39 @@ def plot_line_with_markers(
             markersize=markersize,
         )
 
-    leftaxis.grid(axis="y", linestyle="--", zorder=0)
-    leftaxis.grid(axis="x", linestyle="--", zorder=0)
-
     leftaxis.set_xlabel(xlabel)
     leftaxis.set_ylabel(ylabel_plot)
     leftaxis.set_ylim(0, ylim_plot)
-    
+
+    # Set major x-axis ticks based on xstep
     if xstep:
         x_min, x_max = x_plot.min(), x_plot.max()
         current_xstep = xstep / 1000 if k_bool else xstep
-        
+
         # Use a small epsilon to include the max value in the range
         ticks = np.arange(x_min, x_max + current_xstep * 0.5, current_xstep)
         leftaxis.set_xticks(ticks)
 
         if k_bool:
             leftaxis.set_xticklabels([f"{t}" for t in ticks])
-
+        # For non-k_bool, the default integer representation is fine
     else:
+        # If no xstep, ticks are at the data points
         leftaxis.set_xticks(x_plot)
         if not k_bool:
             leftaxis.set_xticklabels(x_plot.astype(int))
 
+    # Enable grid. Default is major ticks.
+    leftaxis.grid(which="major", axis="x", linestyle="--")
+    leftaxis.grid(which="major", axis="y", linestyle="--")
+
+    # If x_grid_step is provided, set up minor ticks and grid
+    if x_grid_step:
+        from matplotlib.ticker import MultipleLocator
+
+        current_x_grid_step = x_grid_step / 1000 if k_bool else x_grid_step
+        leftaxis.xaxis.set_minor_locator(MultipleLocator(current_x_grid_step))
+        leftaxis.grid(which="minor", axis="x", linestyle="--")
 
     if ytick_step:
         leftaxis.set_yticks(np.arange(0, ylim_plot + 1, ytick_step_plot))
@@ -401,6 +412,7 @@ class ThroughputVsBlkSizePlotter(BasePlotter):
             y_div=100,
             y_label_unit=r"($10^2$ tps)",
             xstep=100,
+            x_grid_step=50,
         )
 
 
@@ -428,6 +440,7 @@ class LatencyVsBlkSizePlotter(BasePlotter):
             y_div=100,
             y_label_unit=r"($10^2$ ms)",
             xstep=100,
+            x_grid_step=50,
         )
 
 
@@ -446,11 +459,12 @@ class ThroughputVsTxArrivalPlotter(BasePlotter):
             ylim=1400,
             labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
             ytick_step=200,
-            xstep=1000,
+            xstep=500,
+            k_bool=True,
             ax=ax,
             show_legend=show_legend,
             y_div=100,
-            y_label_unit=r"($10^2$ tps)",
+            y_label_unit=r"($10^2$ ms)",
         )
 
 
