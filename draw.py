@@ -23,8 +23,8 @@ plt.rcParams.update(
     {
         "text.usetex": False,
         "font.family": "Times",
-        "font.size": 24,
-        "legend.fontsize": 24,
+        "font.size": 26,
+        "legend.fontsize": 26,
     }
 )
 
@@ -67,7 +67,7 @@ def plot_beta(
     pic_name="plot_beta",
     save=False,
     xlabel="TX rate / (TXs/Sec)",
-    ylabel="Throughput (tps)",
+    ylabel="Throughput",
     text_location=50,
     ylim=2800,
     labellist=["bsize=100", "bsize=150", "bsize=80", "bsize=50"],
@@ -76,12 +76,19 @@ def plot_beta(
     xscale=5,
     ax=None,
     show_legend=True,
+    y_div=1,
+    y_label_unit=None,
 ):
     colorlist = ["orange", "red", "grey", "black", "blue", "green"]
     markerlist = ["o", "^", "x", "s"]
     x = data[0, :]
     ynum = np.size(data, 0) - 1
     y = data[1 : ynum + 1, :]
+
+    y_plot = y / y_div if y_div != 1 else y
+    ylim_plot = ylim / y_div if y_div != 1 else ylim
+    ylabel_plot = f"{ylabel} {y_label_unit}" if y_label_unit else ylabel
+
     if ax is None:
         fig, leftaxis = plt.subplots(figsize=(6, 4))
     else:
@@ -91,7 +98,7 @@ def plot_beta(
     for i in range(ynum):
         leftaxis.plot(
             x,
-            y[i, :],
+            y_plot[i, :],
             color=colorlist[i],
             label=labellist[i],
             zorder=2,
@@ -103,8 +110,8 @@ def plot_beta(
     leftaxis.grid(axis="x", linestyle="--", zorder=0)
 
     leftaxis.set_xlabel(xlabel)
-    leftaxis.set_ylabel(ylabel)
-    leftaxis.set_ylim(0, ylim)
+    leftaxis.set_ylabel(ylabel_plot)
+    leftaxis.set_ylim(0, ylim_plot)
     leftaxis.set_xticks(x, x.astype(int))
     # print(x)
     if show_legend:
@@ -137,6 +144,8 @@ def plot_line_with_markers(
     k_bool=False,
     ax=None,
     show_legend=True,
+    y_div=1,
+    y_label_unit=None,
 ):
     x = data[0, :]
     ynum = np.size(data, 0) - 1
@@ -150,10 +159,17 @@ def plot_line_with_markers(
 
     x_plot = x / 1000 if k_bool else x
 
+    y_plot = y / y_div if y_div != 1 else y
+    ylim_plot = ylim / y_div if y_div != 1 else ylim
+    ytick_step_plot = (
+        ytick_step / y_div if ytick_step is not None and y_div != 1 else ytick_step
+    )
+    ylabel_plot = f"{ylabel} {y_label_unit}" if y_label_unit else ylabel
+
     for i in range(ynum):
         leftaxis.plot(
             x_plot,
-            y[i, :],
+            y_plot[i, :],
             color=colorlist[i % len(colorlist)],
             label=labellist[i],
             zorder=2,
@@ -165,8 +181,8 @@ def plot_line_with_markers(
     leftaxis.grid(axis="x", linestyle="--", zorder=0)
 
     leftaxis.set_xlabel(xlabel)
-    leftaxis.set_ylabel(ylabel)
-    leftaxis.set_ylim(0, ylim)
+    leftaxis.set_ylabel(ylabel_plot)
+    leftaxis.set_ylim(0, ylim_plot)
     
     if xstep:
         x_min, x_max = x_plot.min(), x_plot.max()
@@ -186,7 +202,7 @@ def plot_line_with_markers(
 
 
     if ytick_step:
-        leftaxis.set_yticks(np.arange(0, ylim + 1, ytick_step))
+        leftaxis.set_yticks(np.arange(0, ylim_plot + 1, ytick_step_plot))
 
     if show_legend:
         leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.3), ncol=7)
@@ -209,13 +225,29 @@ def plot_time_series(
     ystep,
     show_legend=True,
     linewidth=2,
-    legend_fontsize=None,
+    legend_fontsize=22,
     ax=None,
     legend_ncol=4,
+    y_k_bool=False,
+    y_label_unit=None,
 ):
     x = data[0, :]
     ynum = np.size(data, 0) - 1
     y = data[1 : ynum + 1, :]
+
+    y_plot = y
+    ylim_plot = ylim
+    ystep_plot = ystep
+    ylabel_plot = ylabel
+    if y_k_bool:
+        y_plot = y / 1000
+        ylim_plot = ylim / 1000
+        ystep_plot = ystep / 1000
+        ylabel_plot = f"{ylabel} {y_label_unit}" if y_label_unit else f"{ylabel} ($10^3$)"
+        # 如果 y_label_unit 包含 TX 或 tps，只保留 ($10^3$)
+        if y_label_unit and ("TX" in y_label_unit or "tps" in y_label_unit or "ms" in y_label_unit):
+            ylabel_plot = f"{ylabel} ($10^3$)"
+
     if ax is None:
         fig, leftaxis = plt.subplots(figsize=(6, 4))
     else:
@@ -224,21 +256,28 @@ def plot_time_series(
 
     for i in range(ynum):
         if show_legend:
-            leftaxis.plot(x, y[i, :], label=labellist[i], zorder=2, linewidth=linewidth)
+            leftaxis.plot(x, y_plot[i, :], label=labellist[i], zorder=2, linewidth=linewidth)
         else:
-            leftaxis.plot(x, y[i, :], zorder=2, linewidth=linewidth)
+            leftaxis.plot(x, y_plot[i, :], zorder=2, linewidth=linewidth)
 
     leftaxis.grid(axis="y", linestyle="--", zorder=0)
     leftaxis.grid(axis="x", linestyle="--", zorder=0)
 
     leftaxis.set_xlabel(xlabel)
-    leftaxis.set_ylabel(ylabel)
+    leftaxis.set_ylabel(ylabel_plot)
     leftaxis.set_xlim(0, xlim)
-    leftaxis.set_ylim(0, ylim)
+    leftaxis.set_ylim(0, ylim_plot)
     leftaxis.set_xticks(np.arange(0, xlim + 1, xstep))
-    leftaxis.set_yticks(np.arange(0, ylim + 1, ystep))
+    leftaxis.set_yticks(np.arange(0, ylim_plot + 1, ystep_plot))
     if show_legend:
-        leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.25), ncol=legend_ncol)
+        legend_params = {
+            "loc": "upper center",
+            "bbox_to_anchor": (0.5, 1.25),
+            "ncol": legend_ncol,
+        }
+        if legend_fontsize:
+            legend_params["fontsize"] = legend_fontsize
+        leftaxis.legend(**legend_params)
 
     if ax is None and save:
         plt.savefig(get_figure_path(pic_name), dpi=600, bbox_inches="tight")
@@ -284,6 +323,8 @@ class CrossShardTxsPlotter(BasePlotter):
             labellist=["Random", "X-shard", "cross-shard tx"],
             ax=ax,
             show_legend=show_legend,
+            y_div=100,
+            y_label_unit=r"($10^2$)",
         )
 
 
@@ -300,13 +341,15 @@ class ThroughputVsShardsPlotter(BasePlotter):
             pic_name="throughtput",
             save=self.save and ax is None,
             xlabel="Number of Shards",
-            ylabel="Throughput (tps)",
+            ylabel="Throughput",
             ylim=3500,
             labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
             ytick_step=500,
             markersize=6,
             ax=ax,
             show_legend=show_legend,
+            y_div=100,
+            y_label_unit=r"($10^2$ tps)",
         )
 
 
@@ -323,7 +366,7 @@ class LatencyVsShardsPlotter(BasePlotter):
             pic_name="latency",
             save=self.save and ax is None,
             xlabel="Number of Shards",
-            ylabel="Latency (ms)",
+            ylabel="Latency",
             ylim=1600,
             labellist=["Cross-shard TX", "Intra-shard TX", "Overall TX"],
             ytick_step=200,
@@ -331,6 +374,8 @@ class LatencyVsShardsPlotter(BasePlotter):
             markerlist=["o", "^", "x"],
             ax=ax,
             show_legend=show_legend,
+            y_div=100,
+            y_label_unit=r"($10^2$ ms)",
         )
 
 
@@ -347,12 +392,14 @@ class ThroughputVsBlkSizePlotter(BasePlotter):
             pic_name="blk_size_throughput",
             save=self.save and ax is None,
             xlabel="Block Size (TX)",
-            ylabel="Throughput (tps)",
+            ylabel="Throughput",
             ylim=4000,
             labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
             ytick_step=500,
             ax=ax,
             show_legend=show_legend,
+            y_div=100,
+            y_label_unit=r"($10^2$ tps)",
         )
 
 
@@ -369,7 +416,7 @@ class LatencyVsBlkSizePlotter(BasePlotter):
             pic_name="latency-blksize",
             save=self.save and ax is None,
             xlabel="Block Size(TX)",
-            ylabel="Latency (ms)",
+            ylabel="Latency",
             ylim=1600,
             labellist=["Cross-shard TX", "Intra-shard TX", "Overall TX"],
             ytick_step=200,
@@ -377,6 +424,8 @@ class LatencyVsBlkSizePlotter(BasePlotter):
             markerlist=["o", "^", "x"],
             ax=ax,
             show_legend=show_legend,
+            y_div=100,
+            y_label_unit=r"($10^2$ ms)",
         )
 
 
@@ -391,13 +440,15 @@ class ThroughputVsTxArrivalPlotter(BasePlotter):
             pic_name="throughput-txarate",
             save=self.save and ax is None,
             xlabel="TX Arrival Rate (tps)",
-            ylabel="Throughput (tps)",
+            ylabel="Throughput",
             ylim=1400,
             labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
             ytick_step=200,
             xstep=1000,
             ax=ax,
             show_legend=show_legend,
+            y_div=100,
+            y_label_unit=r"($10^2$ tps)",
         )
 
 
@@ -414,7 +465,7 @@ class LatencyVsTxArrivalPlotter(BasePlotter):
             pic_name="latency-txar",
             save=self.save and ax is None,
             xlabel="TX Arrival Rate ($10^3$ tps)",
-            ylabel="Latency (ms)",
+            ylabel="Latency",
             ylim=700,
             labellist=["Cross-shard TX", "Intra-shard TX", "Overall TX"],
             ytick_step=150,
@@ -424,6 +475,8 @@ class LatencyVsTxArrivalPlotter(BasePlotter):
             k_bool=True,
             ax=ax,
             show_legend=show_legend,
+            y_div=100,
+            y_label_unit=r"($10^2$ ms)",
         )
 
 
@@ -439,7 +492,7 @@ class QueueSizeTotalPlotter(BasePlotter):
             pic_name="qtb",
             save=self.save and ax is None,
             xlabel="Time (sec)",
-            ylabel="Queue Size (TX)",
+            ylabel="Queue Size",
             xlim=2100,
             ylim=44000,
             labellist=[
@@ -456,6 +509,8 @@ class QueueSizeTotalPlotter(BasePlotter):
             ax=ax,
             show_legend=show_legend,
             legend_ncol=7,
+            y_k_bool=True,
+            y_label_unit=r"($10^3$ TX)",
         )
 
 
@@ -470,7 +525,7 @@ class QueueSizeQ1Plotter(BasePlotter):
             pic_name="q1",
             save=self.save and ax is None,
             xlabel="Time (sec)",
-            ylabel="Queue Size (TX)",
+            ylabel="Queue Size",
             xlim=2100,
             ylim=data.max() * 1.1,
             labellist=[
@@ -484,9 +539,10 @@ class QueueSizeQ1Plotter(BasePlotter):
             ],
             ystep=15000,
             xstep=500,
-            # legend_fontsize=14,
             ax=ax,
             show_legend=show_legend,
+            y_k_bool=True,
+            y_label_unit=r"($10^3$ TX)",
         )
 
 
@@ -501,7 +557,7 @@ class QueueSizeQ2Plotter(BasePlotter):
             pic_name="q2",
             save=self.save and ax is None,
             xlabel="Time (sec)",
-            ylabel="Queue Size (TX)",
+            ylabel="Queue Size",
             xlim=2100,
             ylim=data.max() * 1.1,
             labellist=[
@@ -517,6 +573,8 @@ class QueueSizeQ2Plotter(BasePlotter):
             xstep=500,
             show_legend=False,  # This plotter specifically hides legend
             ax=ax,
+            y_k_bool=True,
+            y_label_unit=r"($10^3$ TX)",
         )
 
 
