@@ -1,50 +1,39 @@
-###
-# File: ./plot_fig/draw.py
-# Created Date: Friday, June 20th 2025
-# Author: Zihan
-# -----
-# Last Modified: Friday, 20th June 2025 5:47:58 pm
-# Modified By: the developer formerly known as Zihan at <wzh4464@gmail.com>
-# -----
-# HISTORY:
-# Date      		By   	Comments
-# ----------		------	---------------------------------------------------------
-###
+"""
+Optimized plotting utilities for experiment data visualization.
+Refactored for better maintainability and code reuse.
+"""
 
-# %%
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-import time
 import pandas as pd
 import argparse
 
+# Configure matplotlib for consistent plot styling
 plt.rcParams.update(
     {
-        "text.usetex": False,
+        "text.usetex": True,
         "font.family": "Times",
         "font.size": 30,
         "legend.fontsize": 26,
     }
 )
 
-# %%
 
-# os.environ["PATH"]='/home/wu/anaconda3/bin:/home/wu/anaconda3/condabin:/usr/local/texlive/2022/bin/x86_64-linux:/home/wu/bin:/usr/local/bin:/home/wu/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin'
+# Plot styling constants
+DEFAULT_COLORS = ["orange", "red", "grey", "black", "blue", "green"]
+DEFAULT_MARKERS = ["o", "^", "x", "s", "v", "1"]
+DEFAULT_FIGURE_SIZE = (6, 4)
+DEFAULT_DPI = 600
+DEFAULT_LINEWIDTH = 2
+DEFAULT_MARKERSIZE = 8
 
-# plt.rcParams.update({
-# "text.usetex": True,
-# "font.family": "sans-serif",
-# "font.sans-serif": ["Helvetica"]})
-plt.rcParams.update(
-    {
-        "text.usetex": True,
-        # "font.family": "Helvetica"
-    }
-)
+# Plot layout constants
+LEGEND_BBOX_CENTER = (0.5, 1.4)
+LEGEND_BBOX_LOWER = (0.1, 0)
+SUBTITLE_Y_POSITION = -0.45
 
 
-# %%
 # --------------------------------------------------------------------------------
 # Filename Management
 # --------------------------------------------------------------------------------
@@ -61,152 +50,131 @@ def get_figure_path(pic_name):
 # --------------------------------------------------------------------------------
 
 
-def plot_beta(
+def create_plot(
     data,
-    bar_width=2,
-    pic_name="plot_beta",
+    plot_type="line_with_markers",
+    pic_name="plot",
     save=False,
-    xlabel="TX rate / (TXs/Sec)",
-    ylabel="Throughput",
-    text_location=50,
-    ylim=2800,
-    labellist=["bsize=100", "bsize=150", "bsize=80", "bsize=50"],
-    ytick_k=False,
-    xlim=1000000,
-    xscale=5,
+    xlabel="X-axis",
+    ylabel="Y-axis",
+    ylim=None,
+    xlim=None,
+    labellist=None,
     ax=None,
     show_legend=True,
     y_div=1,
     y_label_unit=None,
-):
-    colorlist = ["orange", "red", "grey", "black", "blue", "green"]
-    markerlist = ["o", "^", "x", "s"]
-    x = data[0, :]
-    ynum = np.size(data, 0) - 1
-    y = data[1 : ynum + 1, :]
-
-    y_plot = y / y_div if y_div != 1 else y
-    ylim_plot = ylim / y_div if y_div != 1 else ylim
-    ylabel_plot = f"{ylabel} {y_label_unit}" if y_label_unit else ylabel
-
-    if ax is None:
-        fig, leftaxis = plt.subplots(figsize=(6, 4))
-    else:
-        leftaxis = ax
-        fig = ax.get_figure()
-
-    for i in range(ynum):
-        leftaxis.plot(
-            x,
-            y_plot[i, :],
-            color=colorlist[i],
-            label=labellist[i],
-            zorder=2,
-            marker=markerlist[i],
-            markersize=8,
-        )
-
-    leftaxis.grid(axis="y", linestyle="--", zorder=0)
-    leftaxis.grid(axis="x", linestyle="--", zorder=0)
-
-    leftaxis.set_xlabel(xlabel)
-    leftaxis.set_ylabel(ylabel_plot)
-    leftaxis.set_ylim(0, ylim_plot)
-    leftaxis.set_xticks(x, x.astype(int))
-    # print(x)
-    if show_legend:
-        leftaxis.legend(loc="upper center", bbox_to_anchor=(0.1, 0), ncol=7)
-    if ytick_k:
-        plt.yticks(
-            np.linspace(0, xlim, xscale + 1),
-            [f"{int(y)}" for y in np.linspace(0, 10, xscale + 1)],
-        )
-        plt.xticks(np.linspace(8, 64, 8))
-        leftaxis.set_xlim(4, 68)
-    if ax is None and save:
-        plt.savefig(get_figure_path(pic_name), dpi=600, bbox_inches="tight")
-    # plt.show()
-
-
-def plot_line_with_markers(
-    data,
-    pic_name,
-    save,
-    xlabel,
-    ylabel,
-    ylim,
-    labellist,
-    ytick_step=None,
-    markersize=8,
-    colorlist=["grey", "blue", "orange", "black", "red", "green"],
-    markerlist=["x", "s", "o", "^", "v", "1"],
+    colorlist=None,
+    markerlist=None,
+    markersize=None,
+    linewidth=None,
     xstep=None,
+    ytick_step=None,
     k_bool=False,
-    ax=None,
-    show_legend=True,
-    y_div=1,
-    y_label_unit=None,
     x_grid_step=None,
     subtitle=None,
     subtitle_fontsize=None,
+    legend_bbox=None,
+    legend_ncol=7,
+    legend_fontsize=None,
+    y_k_bool=False,
+    **kwargs,
 ):
+    """Unified plotting function that can handle different plot types."""
+
+    # Set defaults
+    colorlist = colorlist or DEFAULT_COLORS
+    markerlist = markerlist or DEFAULT_MARKERS
+    markersize = markersize or DEFAULT_MARKERSIZE
+    linewidth = linewidth or DEFAULT_LINEWIDTH
+
     x = data[0, :]
     ynum = np.size(data, 0) - 1
     y = data[1 : ynum + 1, :]
 
+    # Handle data transformations
+    x_plot = x / 1000 if k_bool else x
+    y_plot = y / y_div if y_div != 1 else y
+
+    # Handle y-axis scaling and labeling
+    if y_k_bool:
+        y_plot = y / 1000
+        ylim_scaled = ylim / 1000 if ylim else None
+        ytick_step_scaled = ytick_step / 1000 if ytick_step else None
+        ylabel_scaled = (
+            f"{ylabel} {y_label_unit}" if y_label_unit else f"{ylabel} ($10^3$)"
+        )
+        if y_label_unit and (
+            "TX" in y_label_unit or "tps" in y_label_unit or "ms" in y_label_unit
+        ):
+            ylabel_scaled = f"{ylabel.split(' ')[0]} ($10^3$)"
+    else:
+        ylim_scaled = ylim / y_div if ylim and y_div != 1 else ylim
+        ytick_step_scaled = (
+            ytick_step / y_div if ytick_step and y_div != 1 else ytick_step
+        )
+        ylabel_scaled = f"{ylabel} {y_label_unit}" if y_label_unit else ylabel
+
+    # Create figure if not provided
     if ax is None:
-        fig, leftaxis = plt.subplots(figsize=(6, 4))
+        fig, leftaxis = plt.subplots(figsize=DEFAULT_FIGURE_SIZE)
     else:
         leftaxis = ax
         fig = ax.get_figure()
 
-    x_plot = x / 1000 if k_bool else x
-
-    y_plot = y / y_div if y_div != 1 else y
-    ylim_plot = ylim / y_div if y_div != 1 else ylim
-    ytick_step_plot = (
-        ytick_step / y_div if ytick_step is not None and y_div != 1 else ytick_step
-    )
-    ylabel_plot = f"{ylabel} {y_label_unit}" if y_label_unit else ylabel
-
+    # Plot data based on type
     for i in range(ynum):
-        leftaxis.plot(
-            x_plot,
-            y_plot[i, :],
-            color=colorlist[i % len(colorlist)],
-            label=labellist[i],
-            zorder=2,
-            marker=markerlist[i % len(markerlist)],
-            markersize=markersize,
-        )
+        plot_params = {
+            "color": colorlist[i % len(colorlist)],
+            "zorder": 2,
+        }
 
+        if labellist and show_legend:
+            plot_params["label"] = labellist[i]
+
+        if plot_type == "line_with_markers":
+            plot_params.update(
+                {
+                    "marker": markerlist[i % len(markerlist)],
+                    "markersize": markersize,
+                }
+            )
+        elif plot_type == "time_series":
+            plot_params["linewidth"] = linewidth
+
+        leftaxis.plot(x_plot, y_plot[i, :], **plot_params)
+
+    # Configure axes
     leftaxis.set_xlabel(xlabel)
-    leftaxis.set_ylabel(ylabel_plot)
-    leftaxis.set_ylim(0, ylim_plot)
+    leftaxis.set_ylabel(ylabel_scaled)
 
-    # Set major x-axis ticks based on xstep
+    if ylim_scaled:
+        leftaxis.set_ylim(0, ylim_scaled)
+    if xlim:
+        leftaxis.set_xlim(0, xlim)
+
+    # Configure ticks
     if xstep:
         x_min, x_max = x_plot.min(), x_plot.max()
         current_xstep = xstep / 1000 if k_bool else xstep
-
-        # Use a small epsilon to include the max value in the range
         ticks = np.arange(x_min, x_max + current_xstep * 0.5, current_xstep)
         leftaxis.set_xticks(ticks)
-
         if k_bool:
             leftaxis.set_xticklabels([f"{t}" for t in ticks])
-        # For non-k_bool, the default integer representation is fine
+    elif xlim:
+        step = max(1, xlim // 5)
+        leftaxis.set_xticks(np.arange(0, xlim + 1, step))
     else:
-        # If no xstep, ticks are at the data points
         leftaxis.set_xticks(x_plot)
         if not k_bool:
             leftaxis.set_xticklabels(x_plot.astype(int))
 
-    # Enable grid. Default is major ticks.
-    leftaxis.grid(which="major", axis="x", linestyle="--")
-    leftaxis.grid(which="major", axis="y", linestyle="--")
+    if ytick_step_scaled:
+        y_max = ylim_scaled if ylim_scaled else y_plot.max() * 1.1
+        leftaxis.set_yticks(np.arange(0, y_max + 1, ytick_step_scaled))
 
-    # If x_grid_step is provided, set up minor ticks and grid
+    # Add grid
+    leftaxis.grid(axis="both", linestyle="--", zorder=0)
     if x_grid_step:
         from matplotlib.ticker import MultipleLocator
 
@@ -214,105 +182,66 @@ def plot_line_with_markers(
         leftaxis.xaxis.set_minor_locator(MultipleLocator(current_x_grid_step))
         leftaxis.grid(which="minor", axis="x", linestyle="--")
 
-    if ytick_step:
-        leftaxis.set_yticks(np.arange(0, ylim_plot + 1, ytick_step_plot))
-
-    if show_legend:
-        leftaxis.legend(loc="upper center", bbox_to_anchor=(0.5, 1.4), ncol=7)
-
-    if subtitle:
-        fontsize = (
-            subtitle_fontsize
-            if subtitle_fontsize is not None
-            else plt.rcParams["font.size"]
-        )
-        leftaxis.set_title(subtitle, y=-0.45, fontsize=fontsize)
-
-    if ax is None and save:
-        plt.savefig(get_figure_path(pic_name), dpi=600, bbox_inches="tight")
-    # plt.show()
-
-
-def plot_time_series(
-    data,
-    pic_name,
-    save,
-    xlabel,
-    ylabel,
-    xlim,
-    ylim,
-    labellist,
-    xstep,
-    ystep,
-    show_legend=True,
-    linewidth=2,
-    legend_fontsize=22,
-    ax=None,
-    legend_ncol=4,
-    y_k_bool=False,
-    y_label_unit=None,
-    subtitle=None,
-    subtitle_fontsize=None,
-):
-    x = data[0, :]
-    ynum = np.size(data, 0) - 1
-    y = data[1 : ynum + 1, :]
-
-    y_plot = y
-    ylim_plot = ylim
-    ystep_plot = ystep
-    ylabel_plot = ylabel
-    if y_k_bool:
-        y_plot = y / 1000
-        ylim_plot = ylim / 1000
-        ystep_plot = ystep / 1000
-        ylabel_plot = f"{ylabel} {y_label_unit}" if y_label_unit else f"{ylabel} ($10^3$)"
-        # 如果 y_label_unit 包含 TX 或 tps，只保留 ($10^3$)
-        if y_label_unit and ("TX" in y_label_unit or "tps" in y_label_unit or "ms" in y_label_unit):
-            ylabel_plot = f"{ylabel} ($10^3$)"
-
-    if ax is None:
-        fig, leftaxis = plt.subplots(figsize=(6, 4))
-    else:
-        leftaxis = ax
-        fig = ax.get_figure()
-
-    for i in range(ynum):
-        if show_legend:
-            leftaxis.plot(x, y_plot[i, :], label=labellist[i], zorder=2, linewidth=linewidth)
+    # Configure legend
+    if show_legend and labellist:
+        legend_params = {"ncol": legend_ncol}
+        if legend_bbox:
+            legend_params.update({"loc": "upper center", "bbox_to_anchor": legend_bbox})
         else:
-            leftaxis.plot(x, y_plot[i, :], zorder=2, linewidth=linewidth)
-
-    leftaxis.grid(axis="y", linestyle="--", zorder=0)
-    leftaxis.grid(axis="x", linestyle="--", zorder=0)
-
-    leftaxis.set_xlabel(xlabel)
-    leftaxis.set_ylabel(ylabel_plot)
-    leftaxis.set_xlim(0, xlim)
-    leftaxis.set_ylim(0, ylim_plot)
-    leftaxis.set_xticks(np.arange(0, xlim + 1, xstep))
-    leftaxis.set_yticks(np.arange(0, ylim_plot + 1, ystep_plot))
-    if show_legend:
-        legend_params = {
-            "loc": "upper center",
-            "bbox_to_anchor": (0.5, 1.25),
-            "ncol": legend_ncol,
-        }
+            legend_params.update(
+                {"loc": "upper center", "bbox_to_anchor": LEGEND_BBOX_CENTER}
+            )
         if legend_fontsize:
             legend_params["fontsize"] = legend_fontsize
         leftaxis.legend(**legend_params)
 
+    # Add subtitle
     if subtitle:
-        fontsize = (
-            subtitle_fontsize
-            if subtitle_fontsize is not None
-            else plt.rcParams["font.size"]
-        )
-        leftaxis.set_title(subtitle, y=-0.45, fontsize=fontsize)
+        fontsize = subtitle_fontsize if subtitle_fontsize else plt.rcParams["font.size"]
+        leftaxis.set_title(subtitle, y=SUBTITLE_Y_POSITION, fontsize=fontsize)
 
+    # Save if requested
     if ax is None and save:
-        plt.savefig(get_figure_path(pic_name), dpi=600, bbox_inches="tight")
-    # plt.show()
+        plt.savefig(get_figure_path(pic_name), dpi=DEFAULT_DPI, bbox_inches="tight")
+
+
+# Legacy function wrappers for backward compatibility
+def plot_beta(data, **kwargs):
+    """Legacy wrapper for create_plot with beta-specific defaults."""
+    defaults = {
+        "plot_type": "line_with_markers",
+        "pic_name": "plot_beta",
+        "xlabel": "TX rate / (TXs/Sec)",
+        "ylabel": "Throughput",
+        "ylim": 2800,
+        "labellist": ["bsize=100", "bsize=150", "bsize=80", "bsize=50"],
+        "legend_bbox": LEGEND_BBOX_LOWER,
+    }
+    defaults.update(kwargs)
+    return create_plot(data, **defaults)
+
+
+def plot_line_with_markers(data, **kwargs):
+    """Legacy wrapper for create_plot with line marker defaults."""
+    defaults = {
+        "plot_type": "line_with_markers",
+        "colorlist": ["grey", "blue", "orange", "black", "red", "green"],
+        "markerlist": ["x", "s", "o", "^", "v", "1"],
+    }
+    defaults.update(kwargs)
+    return create_plot(data, **defaults)
+
+
+def plot_time_series(data, **kwargs):
+    """Legacy wrapper for create_plot with time series defaults."""
+    defaults = {
+        "plot_type": "time_series",
+        "legend_bbox": (0.5, 1.25),
+        "legend_ncol": 4,
+        "legend_fontsize": 22,
+    }
+    defaults.update(kwargs)
+    return create_plot(data, **defaults)
 
 
 # --------------------------------------------------------------------------------
@@ -321,229 +250,219 @@ def plot_time_series(
 
 
 class BasePlotter:
-    """Base class for all plotters."""
+    """Base class for all plotters with common functionality."""
 
     def __init__(self, save=True):
         self.save = save
+        self.data_source = None
+        self.plot_config = {}
 
     def _load_and_prepare_data(self):
-        raise NotImplementedError
+        """Load data from source. Override in subclasses."""
+        if self.data_source:
+            try:
+                # First try reading with pandas (handles CSV headers and mixed delimiters)
+                import pandas as pd
+                
+                # Check if file looks like CSV
+                with open(self.data_source, 'r') as f:
+                    first_line = f.readline().strip()
+                    
+                if ',' in first_line:
+                    # CSV format - check if first row contains headers
+                    try:
+                        # Try to parse first value as number
+                        first_val = first_line.split(',')[0]
+                        float(first_val)
+                        # No header, read normally
+                        df = pd.read_csv(self.data_source, header=None)
+                    except ValueError:
+                        # Header present, skip it
+                        df = pd.read_csv(self.data_source, skiprows=1, header=None)
+                else:
+                    # Space-separated format
+                    df = pd.read_csv(self.data_source, sep=r'\s+', header=None)
+                    
+                return np.transpose(df.to_numpy().astype(float)).round(1)
+                
+            except Exception:
+                # Fallback to numpy loadtxt
+                data = np.loadtxt(self.data_source)
+                return np.transpose(data).round(1)
+        raise NotImplementedError(
+            "Subclass must implement _load_and_prepare_data or set data_source"
+        )
 
     def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
-        raise NotImplementedError
+        """Generic plot method using the unified create_plot function."""
+        data = self._load_and_prepare_data()
+
+        # Merge default config with runtime parameters
+        config = self.plot_config.copy()
+        config.update(
+            {
+                "ax": ax,
+                "show_legend": show_legend,
+                "subtitle": subtitle,
+                "subtitle_fontsize": subtitle_fontsize,
+                "save": self.save and ax is None,
+            }
+        )
+
+        return create_plot(data, **config)
 
 
 class CrossShardTxsPlotter(BasePlotter):
+    def __init__(self, save=True):
+        super().__init__(save)
+        self.plot_config = {
+            "plot_type": "line_with_markers",
+            "pic_name": "ncr-nshard",
+            "xlabel": "Number of Shards",
+            "ylabel": r"Num of Cross-shard TXs",
+            "ylim": 1100000,
+            "xlim": 1000000,
+            "labellist": ["Random", "X-shard", "cross-shard tx"],
+            "y_div": 100,
+            "y_label_unit": r"($10^2$)",
+            "legend_bbox": LEGEND_BBOX_LOWER,
+        }
+
     def _load_and_prepare_data(self):
         data = np.genfromtxt("cr-tx.csv", delimiter=",")
         data = np.delete(data, 0, axis=0)
         data = np.transpose(data)
         return data.astype(int)
 
-    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
-        data = self._load_and_prepare_data()
-        plot_beta(
-            data=data,
-            pic_name="ncr-nshard",
-            save=self.save and ax is None,
-            xlabel="Number of Shards",
-            ylabel=r"Num of Cross-shard TXs",
-            text_location=30000,
-            xlim=1000000,
-            ylim=1100000,
-            labellist=["Random", "X-shard", "cross-shard tx"],
-            ax=ax,
-            show_legend=show_legend,
-            y_div=100,
-            y_label_unit=r"($10^2$)",
-        )
-
 
 class ThroughputVsShardsPlotter(BasePlotter):
-    def _load_and_prepare_data(self):
-        data = np.loadtxt("source/result.txt")
-        data = np.transpose(data)
-        return data.round(1)
-
-    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
-        data = self._load_and_prepare_data()
-        plot_line_with_markers(
-            data=data,
-            pic_name="throughtput",
-            save=self.save and ax is None,
-            xlabel="Number of Shards",
-            ylabel="Throughput",
-            ylim=3500,
-            labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
-            ytick_step=500,
-            markersize=6,
-            ax=ax,
-            show_legend=show_legend,
-            y_div=100,
-            y_label_unit=r"($10^2$ tps)",
-            subtitle=subtitle,
-            subtitle_fontsize=subtitle_fontsize,
-        )
+    def __init__(self, save=True):
+        super().__init__(save)
+        self.data_source = "source/result.txt"
+        self.plot_config = {
+            "plot_type": "line_with_markers",
+            "pic_name": "throughtput",
+            "xlabel": "Number of Shards",
+            "ylabel": "Throughput",
+            "ylim": 3500,
+            "labellist": ["Overall TX", "Effective TX", "Cross-shard TX"],
+            "ytick_step": 500,
+            "markersize": 6,
+            "y_div": 100,
+            "y_label_unit": r"($10^2$ tps)",
+        }
 
 
 class LatencyVsShardsPlotter(BasePlotter):
-    def _load_and_prepare_data(self):
-        df = pd.read_csv("source/latency.csv")
-        data = np.transpose(df.to_numpy())
-        return data.round(1)
-
-    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
-        data = self._load_and_prepare_data()
-        plot_line_with_markers(
-            data=data,
-            pic_name="latency",
-            save=self.save and ax is None,
-            xlabel="Number of Shards",
-            ylabel="Latency",
-            ylim=1600,
-            labellist=["Cross-shard TX", "Intra-shard TX", "Overall TX"],
-            ytick_step=200,
-            colorlist=["orange", "red", "grey"],
-            markerlist=["o", "^", "x"],
-            ax=ax,
-            show_legend=show_legend,
-            y_div=100,
-            y_label_unit=r"($10^2$ ms)",
-            subtitle=subtitle,
-            subtitle_fontsize=subtitle_fontsize,
-        )
+    def __init__(self, save=True):
+        super().__init__(save)
+        self.data_source = "source/latency.csv"
+        self.plot_config = {
+            "plot_type": "line_with_markers",
+            "pic_name": "latency",
+            "xlabel": "Number of Shards",
+            "ylabel": "Latency",
+            "ylim": 1600,
+            "labellist": ["Cross-shard TX", "Intra-shard TX", "Overall TX"],
+            "ytick_step": 200,
+            "colorlist": ["orange", "red", "grey"],
+            "markerlist": ["o", "^", "x"],
+            "y_div": 100,
+            "y_label_unit": r"($10^2$ ms)",
+        }
 
 
 class ThroughputVsBlkSizePlotter(BasePlotter):
-    def _load_and_prepare_data(self):
-        data = np.loadtxt("source/blk_size.txt")
-        data = np.transpose(data)
-        return data.round(1)
-
-    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
-        data = self._load_and_prepare_data()
-        plot_line_with_markers(
-            data=data,
-            pic_name="blk_size_throughput",
-            save=self.save and ax is None,
-            xlabel="Block Size (TX)",
-            ylabel="Throughput",
-            ylim=4000,
-            labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
-            ytick_step=500,
-            ax=ax,
-            show_legend=show_legend,
-            y_div=100,
-            y_label_unit=r"($10^2$ tps)",
-            xstep=100,
-            x_grid_step=50,
-            subtitle=subtitle,
-            subtitle_fontsize=subtitle_fontsize,
-        )
+    def __init__(self, save=True):
+        super().__init__(save)
+        self.data_source = "source/blk_size.txt"
+        self.plot_config = {
+            "plot_type": "line_with_markers",
+            "pic_name": "blk_size_throughput",
+            "xlabel": "Block Size (TX)",
+            "ylabel": "Throughput",
+            "ylim": 4000,
+            "labellist": ["Overall TX", "Effective TX", "Cross-shard TX"],
+            "ytick_step": 500,
+            "y_div": 100,
+            "y_label_unit": r"($10^2$ tps)",
+            "xstep": 100,
+            "x_grid_step": 50,
+        }
 
 
 class LatencyVsBlkSizePlotter(BasePlotter):
-    def _load_and_prepare_data(self):
-        df = pd.read_csv("source/latency_blksize.csv")
-        data = np.transpose(df.to_numpy())
-        return data.round(1)
-
-    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
-        data = self._load_and_prepare_data()
-        plot_line_with_markers(
-            data=data,
-            pic_name="latency-blksize",
-            save=self.save and ax is None,
-            xlabel="Block Size(TX)",
-            ylabel="Latency",
-            ylim=1600,
-            labellist=["Cross-shard TX", "Intra-shard TX", "Overall TX"],
-            ytick_step=200,
-            colorlist=["orange", "red", "grey"],
-            markerlist=["o", "^", "x"],
-            ax=ax,
-            show_legend=show_legend,
-            y_div=100,
-            y_label_unit=r"($10^2$ ms)",
-            xstep=100,
-            x_grid_step=50,
-            subtitle=subtitle,
-            subtitle_fontsize=subtitle_fontsize,
-        )
+    def __init__(self, save=True):
+        super().__init__(save)
+        self.data_source = "source/latency_blksize.csv"
+        self.plot_config = {
+            "plot_type": "line_with_markers",
+            "pic_name": "latency-blksize",
+            "xlabel": "Block Size(TX)",
+            "ylabel": "Latency",
+            "ylim": 1600,
+            "labellist": ["Cross-shard TX", "Intra-shard TX", "Overall TX"],
+            "ytick_step": 200,
+            "colorlist": ["orange", "red", "grey"],
+            "markerlist": ["o", "^", "x"],
+            "y_div": 100,
+            "y_label_unit": r"($10^2$ ms)",
+            "xstep": 100,
+            "x_grid_step": 50,
+        }
 
 
 class ThroughputVsTxArrivalPlotter(BasePlotter):
-    def _load_and_prepare_data(self):
-        return (np.transpose(np.loadtxt("source/th_txar.txt"))).round(1)
-
-    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
-        data = self._load_and_prepare_data()
-        plot_line_with_markers(
-            data=data,
-            pic_name="throughput-txarate",
-            save=self.save and ax is None,
-            xlabel="TX Arrival Rate (tps)",
-            ylabel="Throughput",
-            ylim=1400,
-            labellist=["Overall TX", "Effective TX", "Cross-shard TX"],
-            ytick_step=200,
-            xstep=500,
-            k_bool=True,
-            ax=ax,
-            show_legend=show_legend,
-            y_div=100,
-            y_label_unit=r"($10^2$ ms)",
-            subtitle=subtitle,
-            subtitle_fontsize=subtitle_fontsize,
-        )
+    def __init__(self, save=True):
+        super().__init__(save)
+        self.data_source = "source/th_txar.txt"
+        self.plot_config = {
+            "plot_type": "line_with_markers",
+            "pic_name": "throughput-txarate",
+            "xlabel": "TX Arrival Rate (tps)",
+            "ylabel": "Throughput",
+            "ylim": 1400,
+            "labellist": ["Overall TX", "Effective TX", "Cross-shard TX"],
+            "ytick_step": 200,
+            "xstep": 500,
+            "k_bool": True,
+            "y_div": 100,
+            "y_label_unit": r"($10^2$ ms)",
+        }
 
 
 class LatencyVsTxArrivalPlotter(BasePlotter):
-    def _load_and_prepare_data(self):
-        df = pd.read_csv("source/latency_txar.txt")
-        data = np.transpose(df.to_numpy())
-        return data.round(1)
-
-    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
-        data = self._load_and_prepare_data()
-        plot_line_with_markers(
-            data=data,
-            pic_name="latency-txar",
-            save=self.save and ax is None,
-            xlabel="TX Arrival Rate ($10^3$ tps)",
-            ylabel="Latency",
-            ylim=700,
-            labellist=["Cross-shard TX", "Intra-shard TX", "Overall TX"],
-            ytick_step=150,
-            colorlist=["orange", "red", "grey"],
-            markerlist=["o", "^", "x"],
-            xstep=500,
-            k_bool=True,
-            ax=ax,
-            show_legend=show_legend,
-            y_div=100,
-            y_label_unit=r"($10^2$ ms)",
-            subtitle=subtitle,
-            subtitle_fontsize=subtitle_fontsize,
-        )
+    def __init__(self, save=True):
+        super().__init__(save)
+        self.data_source = "source/latency_txar.txt"
+        self.plot_config = {
+            "plot_type": "line_with_markers",
+            "pic_name": "latency-txar",
+            "xlabel": "TX Arrival Rate ($10^3$ tps)",
+            "ylabel": "Latency",
+            "ylim": 700,
+            "labellist": ["Cross-shard TX", "Intra-shard TX", "Overall TX"],
+            "ytick_step": 150,
+            "colorlist": ["orange", "red", "grey"],
+            "markerlist": ["o", "^", "x"],
+            "xstep": 500,
+            "k_bool": True,
+            "y_div": 100,
+            "y_label_unit": r"($10^2$ ms)",
+        }
 
 
 class QueueSizeTotalPlotter(BasePlotter):
-    def _load_and_prepare_data(self):
-        data = np.genfromtxt("../txrate_xshard/qtb.txt")
-        return data[:, ::10]
-
-    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
-        data = self._load_and_prepare_data()
-        plot_time_series(
-            data=data,
-            pic_name="qtb",
-            save=self.save and ax is None,
-            xlabel="Time (sec)",
-            ylabel="Queue Size",
-            xlim=2100,
-            ylim=44000,
-            labellist=[
+    def __init__(self, save=True):
+        super().__init__(save)
+        self.plot_config = {
+            "plot_type": "time_series",
+            "pic_name": "qtb",
+            "xlabel": "Time (sec)",
+            "ylabel": "Queue Size",
+            "xlim": 2100,
+            "ylim": 44000,
+            "labellist": [
                 "50 TXs",
                 "100 TXs",
                 "150 TXs",
@@ -552,33 +471,31 @@ class QueueSizeTotalPlotter(BasePlotter):
                 "300 TXs",
                 "350 TXs",
             ],
-            xstep=500,
-            ystep=5000,
-            ax=ax,
-            show_legend=show_legend,
-            legend_ncol=7,
-            y_k_bool=True,
-            y_label_unit=r"($10^3$ TX)",
-            subtitle=subtitle,
-            subtitle_fontsize=subtitle_fontsize,
-        )
+            "xstep": 500,
+            "ytick_step": 5000,
+            "legend_ncol": 7,
+            "y_k_bool": True,
+            "y_label_unit": r"($10^3$ TX)",
+        }
+
+    def _load_and_prepare_data(self):
+        data = np.genfromtxt("../txrate_xshard/qtb.txt")
+        data = data[:, ::10]
+        # Make x-axis start from 0 instead of 1
+        data[0, :] = data[0, :] - 1
+        return data
 
 
 class QueueSizeQ1Plotter(BasePlotter):
-    def _load_and_prepare_data(self):
-        return np.genfromtxt("../txrate_xshard/q1.txt")
-
-    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
-        data = self._load_and_prepare_data()
-        plot_time_series(
-            data=data,
-            pic_name="q1",
-            save=self.save and ax is None,
-            xlabel="Time (sec)",
-            ylabel="Queue Size",
-            xlim=2100,
-            ylim=data.max() * 1.1,
-            labellist=[
+    def __init__(self, save=True):
+        super().__init__(save)
+        self.plot_config = {
+            "plot_type": "time_series",
+            "pic_name": "q1",
+            "xlabel": "Time (sec)",
+            "ylabel": "Queue Size",
+            "xlim": 2100,
+            "labellist": [
                 "8 shards",
                 "16 shards",
                 "24 shards",
@@ -587,32 +504,30 @@ class QueueSizeQ1Plotter(BasePlotter):
                 "48 shards",
                 "56 shards",
             ],
-            ystep=15000,
-            xstep=500,
-            ax=ax,
-            show_legend=show_legend,
-            y_k_bool=True,
-            y_label_unit=r"($10^3$ TX)",
-            subtitle=subtitle,
-            subtitle_fontsize=subtitle_fontsize,
-        )
+            "ytick_step": 15000,
+            "xstep": 500,
+            "y_k_bool": True,
+            "y_label_unit": r"($10^3$ TX)",
+        }
+
+    def _load_and_prepare_data(self):
+        data = np.genfromtxt("../txrate_xshard/q1.txt")
+        # Make x-axis start from 0 instead of 1
+        data[0, :] = data[0, :] - 1
+        self.plot_config["ylim"] = data.max() * 1.1
+        return data
 
 
 class QueueSizeQ2Plotter(BasePlotter):
-    def _load_and_prepare_data(self):
-        return np.genfromtxt("../txrate_xshard/q2.txt")
-
-    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
-        data = self._load_and_prepare_data()
-        plot_time_series(
-            data=data,
-            pic_name="q2",
-            save=self.save and ax is None,
-            xlabel="Time (sec)",
-            ylabel="Queue Size",
-            xlim=2100,
-            ylim=data.max() * 1.1,
-            labellist=[
+    def __init__(self, save=True):
+        super().__init__(save)
+        self.plot_config = {
+            "plot_type": "time_series",
+            "pic_name": "q2",
+            "xlabel": "Time (sec)",
+            "ylabel": "Queue Size",
+            "xlim": 2100,
+            "labellist": [
                 "8 shards",
                 "16 shards",
                 "24 shards",
@@ -621,12 +536,24 @@ class QueueSizeQ2Plotter(BasePlotter):
                 "48 shards",
                 "56 shards",
             ],
-            ystep=15000,
-            xstep=500,
-            show_legend=False,  # This plotter specifically hides legend
-            ax=ax,
-            y_k_bool=True,
-            y_label_unit=r"($10^3$ TX)",
+            "ytick_step": 15000,
+            "xstep": 500,
+            "y_k_bool": True,
+            "y_label_unit": r"($10^3$ TX)",
+        }
+
+    def _load_and_prepare_data(self):
+        data = np.genfromtxt("../txrate_xshard/q2.txt")
+        # Make x-axis start from 0 instead of 1
+        data[0, :] = data[0, :] - 1
+        self.plot_config["ylim"] = data.max() * 1.1
+        return data
+
+    def plot(self, ax=None, show_legend=True, subtitle=None, subtitle_fontsize=None):
+        # Override to force show_legend=False for this specific plotter
+        return super().plot(
+            ax,
+            show_legend=False,
             subtitle=subtitle,
             subtitle_fontsize=subtitle_fontsize,
         )
@@ -656,15 +583,12 @@ class CombinedThroughputPlotter(BasePlotter):
         )
 
         # Increase margins to avoid clipping of y-labels and suptitle
-        fig.subplots_adjust(
-            left=0.10, right=0.98, top=0.85, bottom=0.20, wspace=0.4
-        )
+        fig.subplots_adjust(left=0.10, right=0.98, top=0.85, bottom=0.20, wspace=0.4)
 
         if self.save:
             plt.savefig(
                 get_figure_path("combined_throughput"), dpi=600, bbox_inches="tight"
             )
-        # plt.show()
 
 
 class CombinedLatencyPlotter(BasePlotter):
@@ -688,15 +612,12 @@ class CombinedLatencyPlotter(BasePlotter):
         )
 
         # Increase margins to avoid clipping of y-labels and suptitle
-        fig.subplots_adjust(
-            left=0.10, right=0.98, top=0.85, bottom=0.20, wspace=0.4
-        )
+        fig.subplots_adjust(left=0.10, right=0.98, top=0.85, bottom=0.20, wspace=0.4)
 
         if self.save:
             plt.savefig(
                 get_figure_path("combined_latency"), dpi=600, bbox_inches="tight"
             )
-        # plt.show()
 
 
 class CombinedQueueSizePlotter(BasePlotter):
@@ -720,13 +641,10 @@ class CombinedQueueSizePlotter(BasePlotter):
         )
 
         # Increase margins to avoid clipping of y-labels and suptitle
-        fig.subplots_adjust(
-            left=0.10, right=0.98, top=0.85, bottom=0.20, wspace=0.4
-        )
+        fig.subplots_adjust(left=0.10, right=0.98, top=0.85, bottom=0.20, wspace=0.4)
 
         if self.save:
             plt.savefig(get_figure_path("combined_queue"), dpi=600, bbox_inches="tight")
-        # plt.show()
 
 
 class PlotFactory:
@@ -773,7 +691,9 @@ def main():
     tasks_to_run = args.tasks
 
     if "all" in tasks_to_run and len(tasks_to_run) > 1:
-        print("Warning: 'all' task was specified with other tasks. Only 'all' will be run.")
+        print(
+            "Warning: 'all' task was specified with other tasks. Only 'all' will be run."
+        )
         tasks_to_run = ["all"]
 
     for task_to_run in tasks_to_run:
@@ -800,7 +720,9 @@ def main():
                 os.system(f"cd {repo_path} && git pull")
                 print("Data updated.")
             else:
-                print(f"Warning: Directory not found at {repo_path}. Skipping data update.")
+                print(
+                    f"Warning: Directory not found at {repo_path}. Skipping data update."
+                )
 
             queue_plot_configs = {
                 "queue_size_total": True,
@@ -826,7 +748,9 @@ def main():
                 os.system(f"cd {repo_path} && git pull")
                 print("Data updated.")
             else:
-                print(f"Warning: Directory not found at {repo_path}. Skipping data update.")
+                print(
+                    f"Warning: Directory not found at {repo_path}. Skipping data update."
+                )
 
         else:
             print(f"Unknown task: {task_to_run}. Please choose from {available_tasks}")
